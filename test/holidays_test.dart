@@ -1,3 +1,4 @@
+import 'package:amlich_vietnam/events/event_store.dart';
 import 'package:amlich_vietnam/lunar/format.dart';
 import 'package:amlich_vietnam/lunar/holidays.dart';
 import 'package:amlich_vietnam/lunar/lunar_calendar.dart';
@@ -45,7 +46,7 @@ void main() {
       addTearDown(tester.view.reset);
       addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
 
-      await tester.pumpWidget(const AmLichApp());
+      await tester.pumpWidget(AmLichApp(store: EventStore(MemoryEventBackend())));
       final now = today();
       expect(find.text('HÔM NAY'), findsOneWidget);
       expect(find.text('Tháng ${now.month}, ${now.year}'), findsOneWidget);
@@ -62,7 +63,7 @@ void main() {
       expect(find.text('HÔM NAY'), findsOneWidget);
 
       // Scroll down to the lower cards.
-      await tester.drag(find.byType(CustomScrollView), const Offset(0, -1500));
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -2500));
       await tester.pumpAndSettle();
       expect(find.text('Ngày lễ sắp tới'), findsOneWidget);
 

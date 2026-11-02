@@ -17,3 +17,23 @@ int daysInMonth(int year, int month) => DateTime(year, month + 1, 0).day;
 String lunarMonthName(LunarDate l) => 'tháng ${lunarMonthNames[l.month - 1]}${l.isLeap ? ' (nhuận)' : ''}';
 
 String two(int n) => n.toString().padLeft(2, '0');
+
+/// Whole days from [a] to [b] (negative when [b] is earlier), ignoring time of day and DST.
+int daysBetween(DateTime a, DateTime b) =>
+    DateTime.utc(b.year, b.month, b.day).difference(DateTime.utc(a.year, a.month, a.day)).inDays;
+
+/// Calendar difference from [a] to [b] (a ≤ b) as years, months and days, e.g. 15/01 → 10/03 is 1 month 23 days.
+({int years, int months, int days}) ymdBetween(DateTime a, DateTime b) {
+  var years = b.year - a.year;
+  var months = b.month - a.month;
+  var days = b.day - a.day;
+  if (days < 0) {
+    months--;
+    days += daysInMonth(b.year, b.month - 1);
+  }
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+  return (years: years, months: months, days: days);
+}

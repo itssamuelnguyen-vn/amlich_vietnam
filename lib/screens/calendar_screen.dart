@@ -16,19 +16,24 @@ class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
 
   @override
-  State<CalendarScreen> createState() => _CalendarScreenState();
+  State<CalendarScreen> createState() => CalendarScreenState();
 }
 
-class _CalendarScreenState extends State<CalendarScreen> {
+class CalendarScreenState extends State<CalendarScreen> {
   final _today = today();
   final _pages = PageController(initialPage: _basePage);
   late DateTime _selected = _today;
   late final List<UpcomingHoliday> _upcoming = upcomingHolidays(_today);
   int _page = _basePage;
 
+  DateTime get selected => _selected;
+
   DateTime _monthOf(int page) => DateTime(_today.year, _today.month + page - _basePage);
 
   int _pageOf(DateTime d) => _basePage + (d.year - _today.year) * 12 + d.month - _today.month;
+
+  /// Selects [day] and turns the month grid to it (used by the other tabs' "show on calendar").
+  void showDate(DateTime day) => _select(day);
 
   void _select(DateTime day) {
     setState(() => _selected = day);
@@ -112,7 +117,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ],
             ),
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+              // Bottom room so the add button never covers the last card.
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
               sliver: SliverList.list(
                 children: [
                   HeroCard(
@@ -132,6 +138,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     onPageChanged: _onPageChanged,
                     onPickMonth: _pickMonth,
                   ),
+                  const SizedBox(height: 16),
+                  DayEventsCard(date: _selected),
                   const SizedBox(height: 16),
                   LuckyHoursCard(date: _selected),
                   const SizedBox(height: 16),

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../events/event_store.dart';
 import '../lunar/format.dart';
+import '../screens/event_editor.dart';
+import '../screens/events_screen.dart';
 import '../lunar/holidays.dart';
 import '../lunar/lunar_calendar.dart';
 import '../theme.dart';
@@ -91,23 +94,28 @@ class LuckyHoursCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                     border: now ? Border.all(color: lich.goodDay, width: 1.5) : null,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(conGiap[chi.indexOf(h.branch)], style: const TextStyle(fontSize: 22)),
-                      const SizedBox(width: 6),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(h.branch, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-                          Text(
-                            '${h.startHour}h–${h.endHour}h',
-                            style: TextStyle(fontSize: 11.5, color: scheme.onSurfaceVariant),
-                          ),
-                        ],
-                      ),
-                    ],
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  alignment: Alignment.center,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(conGiap[chi.indexOf(h.branch)], style: const TextStyle(fontSize: 22)),
+                        const SizedBox(width: 6),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(h.branch, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                            Text(
+                              '${h.startHour}h–${h.endHour}h',
+                              style: TextStyle(fontSize: 11.5, color: scheme.onSurfaceVariant),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -208,5 +216,32 @@ class UpcomingCard extends StatelessWidget {
   static String _lunarShort(DateTime d) {
     final l = solarToLunar(d);
     return '${l.day}/${l.month}${l.isLeap ? ' nhuận' : ''} âm';
+  }
+}
+
+/// Events on [date], with a button to add one.
+class DayEventsCard extends StatelessWidget {
+  const DayEventsCard({super.key, required this.date});
+
+  final DateTime date;
+
+  @override
+  Widget build(BuildContext context) {
+    final events = EventScope.of(context).on(date, solarToLunar(date));
+    final scheme = Theme.of(context).colorScheme;
+    return SectionCard(
+      icon: Icons.event_note_rounded,
+      title: 'Sự kiện trong ngày',
+      trailing: TextButton.icon(
+        onPressed: () => openEventEditor(context, date: date),
+        icon: const Icon(Icons.add_rounded, size: 18),
+        label: const Text('Thêm'),
+      ),
+      child: events.isEmpty
+          ? Text('Chưa có sự kiện nào trong ngày này.', style: TextStyle(color: scheme.onSurfaceVariant))
+          : Column(
+              children: [for (final e in events) EventTile(event: e, date: date)],
+            ),
+    );
   }
 }

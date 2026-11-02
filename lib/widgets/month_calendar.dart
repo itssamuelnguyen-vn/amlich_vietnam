@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../events/event_store.dart';
 import '../lunar/format.dart';
 import '../lunar/holidays.dart';
 import '../lunar/lunar_calendar.dart';
@@ -155,7 +156,11 @@ class _Legend extends StatelessWidget {
     return Wrap(
       alignment: WrapAlignment.center,
       spacing: 16,
-      children: [item(context.lich.goodDay, 'Ngày hoàng đạo'), item(context.lich.holiday, 'Ngày lễ')],
+      children: [
+        item(context.lich.goodDay, 'Ngày hoàng đạo'),
+        item(context.lich.holiday, 'Ngày lễ'),
+        item(Theme.of(context).colorScheme.primary.withValues(alpha: 0.6), 'Sự kiện'),
+      ],
     );
   }
 }
@@ -218,6 +223,10 @@ class _DayCell extends StatelessWidget {
     final lunar = solarToLunar(date);
     final holiday = holidaysOf(date, lunar).isNotEmpty;
     final good = dayStarOf(date, lunar).isGood;
+    final dots = [
+      if (holiday) isSelected ? lich.gold : lich.holiday,
+      for (final e in EventScope.of(context).on(date, lunar)) e.colorValue,
+    ];
     final special = lunar.day == 1 || lunar.day == 15;
 
     var solarColor = date.weekday == DateTime.sunday || holiday ? lich.holiday : scheme.onSurface;
@@ -285,12 +294,24 @@ class _DayCell extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 2),
-                          Container(
-                            width: 4,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: holiday ? (isSelected ? lich.gold : lich.holiday) : Colors.transparent,
-                              shape: BoxShape.circle,
+                          // One dot per holiday/event (up to 3); an empty row keeps every cell the same height.
+                          SizedBox(
+                            height: 5,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                for (final c in dots.take(3))
+                                  Container(
+                                    width: 5,
+                                    height: 5,
+                                    margin: const EdgeInsets.symmetric(horizontal: 1),
+                                    decoration: BoxDecoration(
+                                      color: c,
+                                      shape: BoxShape.circle,
+                                      border: isSelected ? Border.all(color: lich.onHero, width: 0.8) : null,
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                         ],

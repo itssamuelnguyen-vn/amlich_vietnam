@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../lunar/format.dart';
 import '../lunar/lunar_calendar.dart';
 import '../theme.dart';
+import 'date_inputs.dart';
 
 /// Dialog to jump to a month: year with arrows, then a 4×3 grid of months.
 Future<DateTime?> showMonthPicker(BuildContext context, DateTime initial) {
@@ -177,45 +178,15 @@ class _LunarConverterState extends State<_LunarConverter> {
             style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13),
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _Dropdown(
-                  label: 'Ngày',
-                  value: _day,
-                  items: [for (var d = 1; d <= 30; d++) d],
-                  onChanged: (v) => setState(() => _day = v),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _Dropdown(
-                  label: 'Tháng',
-                  value: _month,
-                  items: [for (var m = 1; m <= 12; m++) m],
-                  onChanged: (v) => setState(() => _month = v),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                flex: 2,
-                child: _Dropdown(
-                  label: 'Năm',
-                  value: _year,
-                  items: [for (var y = 1900; y <= 2199; y++) y],
-                  format: (y) => '$y · ${canChiYear(y)}',
-                  onChanged: (v) => setState(() => _year = v),
-                ),
-              ),
-            ],
+          LunarDateInput(
+            value: LunarDate(_day, _month, _year, isLeap: leap),
+            onChanged: (v) => setState(() {
+              _day = v.day;
+              _month = v.month;
+              _year = v.year;
+              _leap = v.isLeap;
+            }),
           ),
-          if (canLeap)
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              value: _leap,
-              onChanged: (v) => setState(() => _leap = v ?? false),
-              title: Text('Tháng $_month nhuận'),
-            ),
           const SizedBox(height: 12),
           Container(
             width: double.infinity,
@@ -259,46 +230,8 @@ class _LunarConverterState extends State<_LunarConverter> {
   }
 
   static String _distance(DateTime d) {
-    final days = DateTime.utc(
-      d.year,
-      d.month,
-      d.day,
-    ).difference(DateTime.utc(today().year, today().month, today().day)).inDays;
+    final days = daysBetween(today(), d);
     if (days == 0) return 'Chính là hôm nay';
     return days > 0 ? 'Còn $days ngày nữa' : 'Đã qua ${-days} ngày';
-  }
-}
-
-class _Dropdown extends StatelessWidget {
-  const _Dropdown({
-    required this.label,
-    required this.value,
-    required this.items,
-    required this.onChanged,
-    this.format,
-  });
-
-  final String label;
-  final int value;
-  final List<int> items;
-  final ValueChanged<int> onChanged;
-  final String Function(int)? format;
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownButtonFormField<int>(
-      initialValue: value,
-      isExpanded: true,
-      menuMaxHeight: 320,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      ),
-      // The closed field shows only the number; the menu adds [format]'s detail.
-      selectedItemBuilder: (_) => [for (final i in items) Text('$i')],
-      items: [for (final i in items) DropdownMenuItem(value: i, child: Text(format?.call(i) ?? '$i'))],
-      onChanged: (v) => onChanged(v!),
-    );
   }
 }

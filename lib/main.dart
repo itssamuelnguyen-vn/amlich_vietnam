@@ -1,21 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
-import 'screens/calendar_screen.dart';
+import 'events/event_store.dart';
+import 'screens/home_screen.dart';
 import 'theme.dart';
 
-void main() => runApp(const AmLichApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final store = EventStore(SqliteEventBackend());
+  await store.load();
+  runApp(AmLichApp(store: store));
+}
 
 class AmLichApp extends StatelessWidget {
-  const AmLichApp({super.key});
+  const AmLichApp({super.key, required this.store});
+
+  final EventStore store;
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Âm lịch',
-      debugShowCheckedModeBanner: false,
-      theme: buildTheme(Brightness.light),
-      darkTheme: buildTheme(Brightness.dark),
-      home: const CalendarScreen(),
+    return EventScope(
+      store: store,
+      child: MaterialApp(
+        title: 'Âm lịch',
+        debugShowCheckedModeBanner: false,
+        theme: buildTheme(Brightness.light),
+        darkTheme: buildTheme(Brightness.dark),
+        locale: const Locale('vi'),
+        supportedLocales: const [Locale('vi'), Locale('en')],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        home: const HomeScreen(),
+      ),
     );
   }
 }
