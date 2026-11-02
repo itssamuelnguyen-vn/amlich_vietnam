@@ -1,0 +1,13 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build APK",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/tool/build_apk.ps1"],
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    }
+  ]
+}
