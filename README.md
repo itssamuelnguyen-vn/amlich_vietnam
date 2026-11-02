@@ -12,7 +12,7 @@ installed directly on the phone, not published to Google Play. The app's user in
 | Countdown to upcoming holidays, quick month/year picker, lunar-to-solar converter | Done |
 | Event notes stored in SQLite, repeating monthly or yearly on a solar or lunar date (death anniversaries, lunar birthdays) | Done |
 | Date tools: days between two dates (with weeks, months and working days), add/subtract days/weeks/months/years | Done |
-| Home-screen widget | Planned |
+| Home-screen widgets: "today" (4×2, shrinks to 2×2) and month grid (4×4) with event dots | Done |
 | Google Calendar sync (through the Google account on the phone) | Planned |
 
 ## Project layout
@@ -29,8 +29,15 @@ installed directly on the phone, not published to Google Play. The app's user in
   `event_editor.dart`) and date tools (`tools_screen.dart`).
 - `lib/screens/calendar_screen.dart`: the calendar tab, assembled from `lib/widgets/`: the day page (swipe to change
   day), the month grid (swipe to change month), the day's events, auspicious hours, upcoming holidays, month picker and lunar converter.
+- `lib/widget/widget_bridge.dart` and `android/app/src/main/kotlin/.../`: the home-screen widgets. They are native
+  Android `AppWidgetProvider`s with their own Kotlin port of the lunar calendar (`LunarCalendar.kt`), so they stay
+  correct at midnight without starting Flutter. Flutter only sends them the upcoming event occurrences over the
+  `amlich/widget` channel; tapping a day in the month widget opens the app on that day.
 - `test/`: run `flutter test`. Checks known Tết dates (including years where Vietnam and China differ, such as 1985 and
   2007), leap months, and a round trip of every day from 1900 to 2100.
+- `android/app/src/test/`: JVM test checking the Kotlin port against values printed by the Dart code. Run it with
+  `android\gradlew.bat :app:testDebugUnitTest` (set `JAVA_HOME` to the JDK, e.g. `D:\dev\android-sdk\jbr`). Regenerate
+  its fixture when the Dart lunar code changes.
 
 ## Building the APK
 

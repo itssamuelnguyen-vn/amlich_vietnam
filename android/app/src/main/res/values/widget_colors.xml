@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="widget_gold">#F6D27A</color>
+    <color name="widget_cream">#FFF4E6</color>
+    <color name="widget_cream_soft">#D9FFF4E6</color>
+    <color name="widget_red">#D32F2F</color>
+    <color name="widget_surface">#F2FFFAF3</color>
+    <color name="widget_on_surface">#2B1A16</color>
+    <color name="widget_muted">#7A6560</color>
+    <color name="widget_faint">#4D7A6560</color>
+    <color name="widget_chip">#1FB3261E</color>
+</resources>

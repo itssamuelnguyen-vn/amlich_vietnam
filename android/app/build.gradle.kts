@@ -47,3 +47,8 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // JVM unit tests for the widgets' Kotlin lunar calendar: android\gradlew.bat :app:testDebugUnitTest
+    testImplementation("junit:junit:4.13.2")
+}

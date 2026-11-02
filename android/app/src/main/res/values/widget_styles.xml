@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="WidgetWeekday">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/widget_muted</item>
+    </style>
+
+    <!-- Month widget cells: the variants differ only in colours, so the launcher resolves night mode itself. -->
+    <style name="WidgetCell">
+        <item name="android:layout_margin">1.5dp</item>
+    </style>
+    <style name="WidgetCell.Today">
+        <item name="android:background">@drawable/widget_cell_today_bg</item>
+    </style>
+
+    <style name="CellSolar">
+        <item name="android:textColor">@color/widget_on_surface</item>
+    </style>
+    <style name="CellSolar.Red">
+        <item name="android:textColor">@color/widget_red</item>
+    </style>
+    <style name="CellSolar.Other">
+        <item name="android:textColor">@color/widget_faint</item>
+    </style>
+    <style name="CellSolar.Today">
+        <item name="android:textColor">@color/widget_cream</item>
+    </style>
+
+    <style name="CellLunar">
+        <item name="android:textColor">@color/widget_muted</item>
+    </style>
+    <style name="CellLunar.Other">
+        <item name="android:textColor">@color/widget_faint</item>
+    </style>
+    <style name="CellLunar.Today">
+        <item name="android:textColor">@color/widget_gold</item>
+    </style>
+</resources>

@@ -4,11 +4,13 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'events/event_store.dart';
 import 'screens/home_screen.dart';
 import 'theme.dart';
+import 'widget/widget_bridge.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final store = EventStore(SqliteEventBackend());
   await store.load();
+  WidgetBridge.attach(store);
   runApp(AmLichApp(store: store));
 }
 

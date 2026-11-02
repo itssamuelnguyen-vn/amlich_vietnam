@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../lunar/format.dart';
+import '../widget/widget_bridge.dart';
 import 'calendar_screen.dart';
 import 'event_editor.dart';
 import 'events_screen.dart';
@@ -17,6 +18,13 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _calendar = GlobalKey<CalendarScreenState>();
   int _tab = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // A tap on a home-screen widget day opens the calendar on that day.
+    WidgetsBinding.instance.addPostFrameCallback((_) => WidgetBridge.listenForDates(_showDate));
+  }
 
   void _showDate(DateTime date) {
     setState(() => _tab = 0);
