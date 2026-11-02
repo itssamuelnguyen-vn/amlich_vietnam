@@ -1,17 +1,18 @@
+import '../data/settings.dart';
 import 'lunar_calendar.dart';
 
-const Map<(int, int), String> _solarHolidays = {
-  (1, 1): 'Tết Dương lịch',
-  (14, 2): 'Lễ Tình nhân',
-  (8, 3): 'Quốc tế Phụ nữ',
-  (30, 4): 'Giải phóng miền Nam',
-  (1, 5): 'Quốc tế Lao động',
-  (1, 6): 'Quốc tế Thiếu nhi',
-  (2, 9): 'Quốc khánh',
-  (20, 10): 'Phụ nữ Việt Nam',
-  (20, 11): 'Nhà giáo Việt Nam',
-  (22, 12): 'Quân đội Nhân dân',
-  (24, 12): 'Giáng sinh',
+const Map<(int, int), (String, HolidayKind)> _solarHolidays = {
+  (1, 1): ('Tết Dương lịch', HolidayKind.vietnam),
+  (14, 2): ('Lễ Tình nhân', HolidayKind.international),
+  (8, 3): ('Quốc tế Phụ nữ', HolidayKind.international),
+  (30, 4): ('Giải phóng miền Nam', HolidayKind.vietnam),
+  (1, 5): ('Quốc tế Lao động', HolidayKind.vietnam),
+  (1, 6): ('Quốc tế Thiếu nhi', HolidayKind.international),
+  (2, 9): ('Quốc khánh', HolidayKind.vietnam),
+  (20, 10): ('Phụ nữ Việt Nam', HolidayKind.vietnam),
+  (20, 11): ('Nhà giáo Việt Nam', HolidayKind.vietnam),
+  (22, 12): ('Quân đội Nhân dân', HolidayKind.vietnam),
+  (24, 12): ('Giáng sinh', HolidayKind.international),
 };
 
 const Map<(int, int), String> _lunarHolidays = {
@@ -27,12 +28,16 @@ const Map<(int, int), String> _lunarHolidays = {
   (23, 12): 'Ông Công Ông Táo',
 };
 
-/// Vietnamese names of the holidays falling on [date]; [lunar] must be `solarToLunar(date)`.
-List<String> holidaysOf(DateTime date, LunarDate lunar) => [
-  ?_solarHolidays[(date.day, date.month)],
-  if (!lunar.isLeap) ?_lunarHolidays[(lunar.day, lunar.month)],
-  if (!lunar.isLeap && lunar.month == 12 && lunar.day == daysInLunarMonth(12, lunar.year)) 'Giao thừa',
-];
+/// Vietnamese names of the holidays falling on [date] in the groups [kinds]; [lunar] must be `solarToLunar(date)`.
+List<String> holidaysOf(DateTime date, LunarDate lunar, {Set<HolidayKind> kinds = const {...HolidayKind.values}}) {
+  final solar = _solarHolidays[(date.day, date.month)];
+  final traditional = kinds.contains(HolidayKind.lunar) && !lunar.isLeap;
+  return [
+    if (solar != null && kinds.contains(solar.$2)) solar.$1,
+    if (traditional) ?_lunarHolidays[(lunar.day, lunar.month)],
+    if (traditional && lunar.month == 12 && lunar.day == daysInLunarMonth(12, lunar.year)) 'Giao thừa',
+  ];
+}
 
 class UpcomingHoliday {
   const UpcomingHoliday(this.date, this.name, this.daysLeft);
@@ -43,13 +48,24 @@ class UpcomingHoliday {
 }
 
 /// The next [count] holidays on or after [from] (the 2nd and 3rd days of Tết left out).
-List<UpcomingHoliday> upcomingHolidays(DateTime from, {int count = 5}) {
+List<UpcomingHoliday> upcomingHolidays(
+  DateTime from, {
+  int count = 5,
+  Set<HolidayKind> kinds = const {...HolidayKind.values},
+}) {
   final result = <UpcomingHoliday>[];
   for (var i = 0; i < 400 && result.length < count; i++) {
     final d = DateTime(from.year, from.month, from.day + i);
-    for (final name in holidaysOf(d, solarToLunar(d))) {
+    for (final name in holidaysOf(d, solarToLunar(d), kinds: kinds)) {
       if (!name.startsWith('Mùng')) result.add(UpcomingHoliday(d, name, i));
     }
   }
   return result.take(count).toList();
+}
+
+/// Solar date of the next Tết Nguyên đán on or after [from].
+DateTime nextTet(DateTime from) {
+  final lunarYear = solarToLunar(from).year;
+  final tet = lunarToSolar(LunarDate(1, 1, lunarYear))!;
+  return tet.isBefore(from) ? lunarToSolar(LunarDate(1, 1, lunarYear + 1))! : tet;
 }

@@ -2,10 +2,11 @@ import 'package:amlich_vietnam/events/event.dart';
 import 'package:amlich_vietnam/events/event_store.dart';
 import 'package:amlich_vietnam/lunar/format.dart';
 import 'package:amlich_vietnam/lunar/lunar_calendar.dart';
-import 'package:amlich_vietnam/main.dart';
 import 'package:amlich_vietnam/screens/tools_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'helpers.dart';
 
 bool _on(Event e, DateTime d) => e.occursOn(d, solarToLunar(d));
 
@@ -97,12 +98,10 @@ void main() {
   });
 
   testWidgets('add a lunar yearly event from the calendar and see it in the events tab', (tester) async {
-    tester.view.physicalSize = const Size(1080, 2340);
-    tester.view.devicePixelRatio = 3;
-    addTearDown(tester.view.reset);
-    final store = EventStore(MemoryEventBackend());
-    await store.load();
-    await tester.pumpWidget(AmLichApp(store: store));
+    usePhoneScreen(tester);
+    final app = await testApp();
+    final store = app.events;
+    await tester.pumpWidget(app);
 
     await tester.tap(find.byTooltip('Thêm sự kiện'));
     await tester.pumpAndSettle();

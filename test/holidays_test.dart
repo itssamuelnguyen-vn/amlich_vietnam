@@ -1,10 +1,10 @@
-import 'package:amlich_vietnam/events/event_store.dart';
 import 'package:amlich_vietnam/lunar/format.dart';
 import 'package:amlich_vietnam/lunar/holidays.dart';
 import 'package:amlich_vietnam/lunar/lunar_calendar.dart';
-import 'package:amlich_vietnam/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'helpers.dart';
 
 List<String> _on(DateTime d) => holidaysOf(d, solarToLunar(d));
 
@@ -46,7 +46,7 @@ void main() {
       addTearDown(tester.view.reset);
       addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
 
-      await tester.pumpWidget(AmLichApp(store: EventStore(MemoryEventBackend())));
+      await tester.pumpWidget(await testApp());
       final now = today();
       expect(find.text('HÔM NAY'), findsOneWidget);
       expect(find.text('Tháng ${now.month}, ${now.year}'), findsOneWidget);

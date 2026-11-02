@@ -1,6 +1,14 @@
 import 'lunar_calendar.dart';
 
 const weekdayShort = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+
+/// Weekday columns in display order: Monday-first (Vietnamese default) or Sunday-first. Values are DateTime.weekday.
+List<int> weekdayOrder({required bool mondayFirst}) =>
+    mondayFirst ? const [1, 2, 3, 4, 5, 6, 7] : const [7, 1, 2, 3, 4, 5, 6];
+
+/// The first day of the week containing [date].
+DateTime startOfWeek(DateTime date, {required bool mondayFirst}) =>
+    DateTime(date.year, date.month, date.day - (mondayFirst ? date.weekday - 1 : date.weekday % 7));
 const weekdayNames = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật'];
 const lunarMonthNames = ['Giêng', 'Hai', 'Ba', 'Tư', 'Năm', 'Sáu', 'Bảy', 'Tám', 'Chín', 'Mười', 'Mười Một', 'Chạp'];
 

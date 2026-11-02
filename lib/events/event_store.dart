@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
-import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
+import '../data/app_database.dart';
 import '../lunar/lunar_calendar.dart';
 import 'event.dart';
 
@@ -18,25 +18,7 @@ abstract class EventBackend {
 }
 
 class SqliteEventBackend implements EventBackend {
-  Database? _db;
-
-  Future<Database> get _database async => _db ??= await openDatabase(
-    p.join(await getDatabasesPath(), 'amlich.db'),
-    version: 1,
-    onCreate: (db, version) => db.execute('''
-      CREATE TABLE events(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        note TEXT NOT NULL DEFAULT '',
-        calendar TEXT NOT NULL,
-        day INTEGER NOT NULL,
-        month INTEGER NOT NULL,
-        year INTEGER NOT NULL,
-        leap INTEGER NOT NULL DEFAULT 0,
-        repeat TEXT NOT NULL,
-        color INTEGER NOT NULL DEFAULT 0
-      )'''),
-  );
+  Future<Database> get _database => AppDatabase.instance;
 
   @override
   Future<List<Event>> loadAll() async => [
@@ -118,6 +100,26 @@ class EventStore extends ChangeNotifier {
         if (x.id != e.id) x,
     ];
     notifyListeners();
+  }
+
+  /// Adds [incoming] (from a backup). With [replace] every current event is deleted first; otherwise events equal
+  /// to an existing one (same [key]) are skipped. Returns how many were added.
+  Future<int> import(List<Event> incoming, {required bool replace, required String Function(Event) key}) async {
+    if (replace) {
+      for (final e in _events) {
+        await _backend.delete(e.id!);
+      }
+      _events = [];
+    }
+    final seen = {for (final e in _events) key(e)};
+    final added = <Event>[];
+    for (final e in incoming) {
+      if (!seen.add(key(e))) continue;
+      added.add(e.copyWith(id: await _backend.insert(e)));
+    }
+    _events = [..._events, ...added];
+    notifyListeners();
+    return added.length;
   }
 
   /// Events falling on [date]; [lunar] must be `solarToLunar(date)`.

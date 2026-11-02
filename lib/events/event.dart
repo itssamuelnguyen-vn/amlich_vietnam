@@ -36,7 +36,10 @@ class Event {
     this.leap = false,
     this.repeat = Repeat.none,
     this.color = 0,
+    this.remindDays = noReminder,
   });
+
+  static const noReminder = -1;
 
   final int? id;
   final String title;
@@ -50,6 +53,9 @@ class Event {
   final bool leap;
   final Repeat repeat;
   final int color;
+
+  /// Days before an occurrence to remind (0 = on the day), or [noReminder].
+  final int remindDays;
 
   bool get isLunar => calendar == EventCalendar.lunar;
 
@@ -132,6 +138,7 @@ class Event {
     bool? leap,
     Repeat? repeat,
     int? color,
+    int? remindDays,
   }) => Event(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -143,6 +150,7 @@ class Event {
     leap: leap ?? this.leap,
     repeat: repeat ?? this.repeat,
     color: color ?? this.color,
+    remindDays: remindDays ?? this.remindDays,
   );
 
   Map<String, Object?> toMap() => {
@@ -156,6 +164,7 @@ class Event {
     'leap': leap ? 1 : 0,
     'repeat': repeat.name,
     'color': color,
+    'remind_days': remindDays,
   };
 
   factory Event.fromMap(Map<String, Object?> m) => Event(
@@ -169,5 +178,6 @@ class Event {
     leap: m['leap'] == 1,
     repeat: Repeat.values.byName(m['repeat'] as String),
     color: (m['color'] as int?) ?? 0,
+    remindDays: (m['remind_days'] as int?) ?? noReminder,
   );
 }

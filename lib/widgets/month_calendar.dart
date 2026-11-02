@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/settings.dart';
 import '../events/event_store.dart';
 import '../lunar/format.dart';
 import '../lunar/holidays.dart';
@@ -88,15 +89,15 @@ class MonthCalendar extends StatelessWidget {
             const SizedBox(height: 6),
             Row(
               children: [
-                for (var i = 0; i < 7; i++)
+                for (final wd in weekdayOrder(mondayFirst: SettingsScope.of(context).value.weekStartsMonday))
                   Expanded(
                     child: Text(
-                      weekdayShort[i],
+                      weekdayShort[wd - 1],
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: i == 6 ? context.lich.holiday : scheme.onSurfaceVariant,
+                        color: wd == DateTime.sunday ? context.lich.holiday : scheme.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -175,8 +176,8 @@ class _MonthGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Starts on the Monday on or before the 1st and always shows 6 weeks.
-    final first = DateTime(month.year, month.month, 1 - (DateTime(month.year, month.month).weekday - 1));
+    // Starts on the first day of the week containing the 1st and always shows 6 weeks.
+    final first = startOfWeek(month, mondayFirst: SettingsScope.of(context).value.weekStartsMonday);
     return Column(
       children: [
         for (var w = 0; w < 6; w++)
@@ -221,7 +222,7 @@ class _DayCell extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final lich = context.lich;
     final lunar = solarToLunar(date);
-    final holiday = holidaysOf(date, lunar).isNotEmpty;
+    final holiday = holidaysOf(date, lunar, kinds: SettingsScope.of(context).value.holidayKinds).isNotEmpty;
     final good = dayStarOf(date, lunar).isGood;
     final dots = [
       if (holiday) isSelected ? lich.gold : lich.holiday,

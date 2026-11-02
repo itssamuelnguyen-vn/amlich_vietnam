@@ -5,9 +5,10 @@ import '../widget/widget_bridge.dart';
 import 'calendar_screen.dart';
 import 'event_editor.dart';
 import 'events_screen.dart';
+import 'settings_screen.dart';
 import 'tools_screen.dart';
 
-/// The three tabs: calendar, events, tools.
+/// The four tabs: calendar, events, tools, settings.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -40,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
           CalendarScreen(key: _calendar),
           EventsScreen(onShowDate: _showDate),
           ToolsScreen(onShowDate: _showDate),
+          const SettingsScreen(),
         ],
       ),
       floatingActionButton: _tab == 0
@@ -68,6 +70,11 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.calculate_outlined),
             selectedIcon: Icon(Icons.calculate),
             label: 'Tiện ích',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Cài đặt',
           ),
         ],
       ),

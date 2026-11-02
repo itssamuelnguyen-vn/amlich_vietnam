@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/settings.dart';
 import '../lunar/format.dart';
 import '../lunar/holidays.dart';
 import '../lunar/lunar_calendar.dart';
@@ -68,9 +69,15 @@ class _HeroContent extends StatelessWidget {
     final lich = context.lich;
     final lunar = solarToLunar(date);
     final star = dayStarOf(date, lunar);
-    final holidays = holidaysOf(date, lunar);
+    final holidays = holidaysOf(date, lunar, kinds: SettingsScope.of(context).value.holidayKinds);
     final onHero = lich.onHero;
     final soft = onHero.withValues(alpha: 0.75);
+    final largeText = MediaQuery.textScalerOf(context).scale(1) > 1.1;
+    final canChi = [
+      _CanChi('Năm', canChiYear(lunar.year), onHero, soft),
+      _CanChi('Tháng', canChiMonth(lunar.month, lunar.year), onHero, soft),
+      _CanChi('Ngày', canChiDay(date), onHero, soft),
+    ];
 
     return Stack(
       children: [
@@ -196,16 +203,15 @@ class _HeroContent extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _CanChi('Năm', canChiYear(lunar.year), onHero, soft),
-                      _CanChi('Tháng', canChiMonth(lunar.month, lunar.year), onHero, soft),
-                      _CanChi('Ngày', canChiDay(date), onHero, soft),
-                    ],
-                  ),
+                  if (!largeText) Column(crossAxisAlignment: CrossAxisAlignment.end, children: canChi),
                 ],
               ),
+              // With large text the stem-branch column no longer fits beside the lunar date, so it moves below.
+              if (largeText)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Wrap(spacing: 14, runSpacing: 2, children: canChi),
+                ),
               const SizedBox(height: 14),
               Wrap(
                 spacing: 8,

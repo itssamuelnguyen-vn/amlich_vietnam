@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../data/settings.dart';
 import '../lunar/format.dart';
 import '../lunar/holidays.dart';
 import '../lunar/lunar_calendar.dart';
@@ -23,7 +25,18 @@ class CalendarScreenState extends State<CalendarScreen> {
   final _today = today();
   final _pages = PageController(initialPage: _basePage);
   late DateTime _selected = _today;
-  late final List<UpcomingHoliday> _upcoming = upcomingHolidays(_today);
+  List<UpcomingHoliday>? _upcoming;
+  Set<HolidayKind>? _upcomingKinds;
+
+  /// Upcoming holidays, recomputed only when the shown holiday groups change.
+  List<UpcomingHoliday> _upcomingFor(Set<HolidayKind> kinds) {
+    if (_upcoming == null || !setEquals(kinds, _upcomingKinds)) {
+      _upcoming = upcomingHolidays(_today, kinds: kinds);
+      _upcomingKinds = kinds;
+    }
+    return _upcoming!;
+  }
+
   int _page = _basePage;
 
   DateTime get selected => _selected;
@@ -143,7 +156,7 @@ class CalendarScreenState extends State<CalendarScreen> {
                   const SizedBox(height: 16),
                   LuckyHoursCard(date: _selected),
                   const SizedBox(height: 16),
-                  UpcomingCard(items: _upcoming, onTap: _select),
+                  UpcomingCard(items: _upcomingFor(SettingsScope.of(context).value.holidayKinds), onTap: _select),
                 ],
               ),
             ),
