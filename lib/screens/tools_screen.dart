@@ -6,10 +6,13 @@ import 'package:flutter/services.dart';
 import '../lunar/format.dart';
 import '../lunar/lunar_calendar.dart';
 import '../theme.dart';
+import '../widgets/age_cards.dart';
 import '../widgets/date_inputs.dart';
 import '../widgets/day_sections.dart';
+import '../widgets/good_days_card.dart';
+import '../widgets/result_box.dart';
 
-/// Date tools: the distance between two dates, and adding or subtracting days, weeks, months or years.
+/// Tools: choosing a good day, ages and family, the distance between two dates, and date arithmetic.
 class ToolsScreen extends StatelessWidget {
   const ToolsScreen({super.key, required this.onShowDate});
 
@@ -27,6 +30,12 @@ class ToolsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
         children: [
+          GoodDaysCard(onShowDate: onShowDate),
+          const SizedBox(height: 16),
+          const AgeLookupCard(),
+          const SizedBox(height: 16),
+          const FamilyCard(),
+          const SizedBox(height: 16),
           const _DistanceCard(),
           const SizedBox(height: 16),
           _AddCard(onShowDate: onShowDate),
@@ -94,7 +103,7 @@ class _DistanceCardState extends State<_DistanceCard> {
             value: _includeEnd,
             onChanged: (v) => setState(() => _includeEnd = v),
           ),
-          _ResultBox(
+          ResultBox(
             big: '$days ngày',
             lines: [
               if (days >= 7) '= ${days ~/ 7} tuần${days % 7 > 0 ? ' ${days % 7} ngày' : ''}',
@@ -212,9 +221,9 @@ class _AddCardState extends State<_AddCard> {
           ),
           const SizedBox(height: 14),
           if (result == null)
-            const _ResultBox(big: '—', lines: ['Nhập số lượng (kết quả phải trong khoảng 1900–2199)'])
+            const ResultBox(big: '—', lines: ['Nhập số lượng (kết quả phải trong khoảng 1900–2199)'])
           else
-            _ResultBox(
+            ResultBox(
               big: '${two(result.day)}/${two(result.month)}/${result.year}',
               lines: [
                 weekdayNames[result.weekday - 1],
@@ -227,40 +236,6 @@ class _AddCardState extends State<_AddCard> {
                 style: TextButton.styleFrom(foregroundColor: context.lich.gold),
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-/// The red-and-gold result panel shared by the tools.
-class _ResultBox extends StatelessWidget {
-  const _ResultBox({required this.big, required this.lines, this.action});
-
-  final String big;
-  final List<String> lines;
-  final Widget? action;
-
-  @override
-  Widget build(BuildContext context) {
-    final lich = context.lich;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(colors: [lich.heroTop, lich.heroBottom]),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('KẾT QUẢ', style: TextStyle(color: lich.gold, fontSize: 11, letterSpacing: 1.5)),
-          Text(
-            big,
-            style: TextStyle(color: lich.onHero, fontFamily: 'serif', fontSize: 30, fontWeight: FontWeight.w700),
-          ),
-          for (final l in lines) Text(l, style: TextStyle(color: lich.onHero.withValues(alpha: 0.85), fontSize: 14)),
-          ?action,
         ],
       ),
     );

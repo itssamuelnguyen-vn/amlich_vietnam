@@ -6,6 +6,7 @@ import '../lunar/format.dart';
 import '../lunar/holidays.dart';
 import '../lunar/lunar_calendar.dart';
 import '../theme.dart';
+import '../widgets/almanac_card.dart';
 import '../widgets/day_sections.dart';
 import '../widgets/hero_card.dart';
 import '../widgets/month_calendar.dart';
@@ -153,6 +154,8 @@ class CalendarScreenState extends State<CalendarScreen> {
                   ),
                   const SizedBox(height: 16),
                   DayEventsCard(date: _selected),
+                  const SizedBox(height: 16),
+                  AlmanacCard(date: _selected),
                   const SizedBox(height: 16),
                   LuckyHoursCard(date: _selected),
                   const SizedBox(height: 16),

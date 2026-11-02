@@ -140,9 +140,10 @@ void main() {
     for (final tab in ['Sự kiện', 'Tiện ích', 'Cài đặt']) {
       await tester.tap(find.text(tab).last);
       await tester.pumpAndSettle();
-      for (var i = 0; i < 4; i++) {
+      for (var i = 0; i < 6; i++) {
         await tester.drag(find.byType(ListView).last, const Offset(0, -400));
         await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: '$tab, scroll $i');
       }
     }
     expect(tester.takeException(), isNull);

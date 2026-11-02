@@ -307,3 +307,10 @@ DayStar dayStarOf(DateTime date, LunarDate lunar) {
 const List<String> conGiap = ['🐭', '🐃', '🐯', '🐱', '🐉', '🐍', '🐴', '🐐', '🐵', '🐓', '🐶', '🐷'];
 
 String yearAnimal(int lunarYear) => conGiap[(lunarYear + 8) % 12];
+
+/// Branch of the solar-term month (tháng tiết) containing [date]: Dần from Lập xuân (315°), Mão from Kinh trập, and
+/// so on. The day a term begins already belongs to the new month, so the sun is taken at the end of the day.
+int solarTermMonthBranch(DateTime date) {
+  final degrees = _sunLongitude(jdFromDateTime(date) + 1 - 0.5 - _timeZone / 24) * 180 / math.pi;
+  return (2 + ((degrees - 315 + 360) % 360) ~/ 30) % 12;
+}

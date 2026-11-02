@@ -24,7 +24,12 @@ void main() {
     expect(dates.first.compareTo('2026-10-01'), greaterThanOrEqualTo(0)); // from the start of last month
     expect(dates.last.compareTo('2027-11-02'), lessThanOrEqualTo(0));
     expect(list.where((o) => o['t'] == 'Rằm'), hasLength(inInclusiveRange(13, 15)));
-    expect(list.singleWhere((o) => o['t'] == 'Họp'), {'t': 'Họp', 'd': '2026-11-05', 'c': eventColors[3].toARGB32(), 'r': -1});
+    expect(list.singleWhere((o) => o['t'] == 'Họp'), {
+      't': 'Họp',
+      'd': '2026-11-05',
+      'c': eventColors[3].toARGB32(),
+      'r': -1,
+    });
     expect(list.where((o) => o['t'] == 'Cũ'), isEmpty);
   });
 

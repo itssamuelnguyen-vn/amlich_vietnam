@@ -138,6 +138,6 @@ void main() {
     // The tools tab renders.
     await tester.tap(find.text('Tiện ích'));
     await tester.pumpAndSettle();
-    expect(find.text('Khoảng cách giữa hai ngày'), findsOneWidget);
+    expect(find.text('Chọn ngày tốt'), findsOneWidget);
   });
 }
