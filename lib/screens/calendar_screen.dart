@@ -11,6 +11,7 @@ import '../widgets/day_sections.dart';
 import '../widgets/hero_card.dart';
 import '../widgets/month_calendar.dart';
 import '../widgets/pickers.dart';
+import 'year_screen.dart';
 
 /// Page index of the current month in the month PageView; pages to the left are earlier months.
 const _basePage = 12 * 300;
@@ -79,6 +80,12 @@ class CalendarScreenState extends State<CalendarScreen> {
     _select(month.year == _today.year && month.month == _today.month ? _today : month);
   }
 
+  Future<void> _openYear() async {
+    final month = await openYearView(context, _monthOf(_page).year);
+    if (month == null) return;
+    _select(month.year == _today.year && month.month == _today.month ? _today : month);
+  }
+
   Future<void> _convert() async {
     final date = await showLunarConverter(context, _selected);
     if (date != null) _select(date);
@@ -108,7 +115,15 @@ class CalendarScreenState extends State<CalendarScreen> {
               title: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Lịch Vạn Niên', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
+                  // Shrinks rather than wraps when large text or three buttons leave little room.
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Lịch Vạn Niên',
+                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+                    ),
+                  ),
                   Text(
                     'Năm ${canChiYear(lunarToday.year)} ${yearAnimal(lunarToday.year)}',
                     style: TextStyle(color: context.lich.goodDay, fontWeight: FontWeight.w600, fontSize: 14),
@@ -120,6 +135,12 @@ class CalendarScreenState extends State<CalendarScreen> {
                   tooltip: 'Đổi ngày âm sang dương',
                   onPressed: _convert,
                   icon: const Icon(Icons.swap_horiz_rounded),
+                ),
+                const SizedBox(width: 4),
+                IconButton.filledTonal(
+                  tooltip: 'Xem cả năm',
+                  onPressed: _openYear,
+                  icon: const Icon(Icons.calendar_view_month_rounded),
                 ),
                 const SizedBox(width: 4),
                 IconButton.filledTonal(

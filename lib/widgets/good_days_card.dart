@@ -178,7 +178,10 @@ class _ResultTile extends StatelessWidget {
                 ],
               ),
             ),
-            Text('★' * (day.score + 1), style: TextStyle(color: lich.goodDay, fontSize: 15)),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [for (var i = 0; i <= day.score; i++) Icon(Icons.star_rounded, size: 16, color: lich.goodDay)],
+            ),
           ],
         ),
       ),

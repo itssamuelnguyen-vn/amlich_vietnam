@@ -148,4 +148,20 @@ void main() {
     }
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('year view opens and jumps to the tapped month', (tester) async {
+    usePhoneScreen(tester);
+    await tester.pumpWidget(await testApp());
+    await tester.tap(find.byTooltip('Xem cả năm'));
+    await tester.pumpAndSettle();
+    final year = DateTime.now().year;
+    expect(find.text('Năm $year'), findsOneWidget);
+    await tester.tap(find.byTooltip('Năm sau'));
+    await tester.pumpAndSettle();
+    expect(find.text('Năm ${year + 1}'), findsOneWidget);
+    await tester.tap(find.text('Tháng 3'));
+    await tester.pumpAndSettle();
+    expect(find.text('Tháng 3, ${year + 1}'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

@@ -120,7 +120,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Thêm widget "Đếm ngược" từ màn hình chính: nhấn giữ chỗ trống → Tiện ích → Âm lịch.',
+                  'Thêm widget "Đếm ngược": nhấn giữ chỗ trống trên màn hình chính, chọn Tiện ích (Widgets), rồi chọn Âm lịch.',
                   style: TextStyle(fontSize: 12.5, color: theme.colorScheme.onSurfaceVariant),
                 ),
               ],
