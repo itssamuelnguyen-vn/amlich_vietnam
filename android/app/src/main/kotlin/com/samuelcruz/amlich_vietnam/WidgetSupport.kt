@@ -9,40 +9,75 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import org.json.JSONArray
+import org.json.JSONObject
 import java.time.LocalDate
 import java.time.ZoneId
 
-/** One event occurrence written by Flutter (lib/widget/widget_bridge.dart). */
-data class Occurrence(val title: String, val date: LocalDate, val color: Int)
+/** One event occurrence written by Flutter (lib/widget/widget_bridge.dart); [remindDays] is -1 for no reminder. */
+data class Occurrence(val title: String, val date: LocalDate, val color: Int, val remindDays: Int)
 
+/** Settings Flutter sends along (see WidgetBridge.syncPayload). */
+data class SyncSettings(
+    val weekStartsMonday: Boolean = true,
+    val holidayKinds: Set<String> = LunarCalendar.ALL_KINDS,
+    val reminderHour: Int = 7,
+    val reminderMinute: Int = 0,
+    val lunarReminders: Boolean = false,
+)
+
+data class Countdown(val title: String, val dates: List<LocalDate>)
+
+/** What Flutter last pushed, kept in SharedPreferences so widgets and alarms work while the app is closed. */
 object WidgetData {
     private const val PREFS = "amlich_widget"
-    private const val KEY_OCCURRENCES = "occurrences"
 
-    fun saveOccurrences(context: Context, json: String) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_OCCURRENCES, json).apply()
+    private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
+    fun save(context: Context, occurrences: String, settings: String, countdown: String) {
+        prefs(context).edit()
+            .putString("occurrences", occurrences)
+            .putString("settings", settings)
+            .putString("countdown", countdown)
+            .apply()
     }
 
     /** Occurrences from the start of last month to a year ahead, sorted by date. */
-    fun occurrences(context: Context): List<Occurrence> {
-        val json = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_OCCURRENCES, null)
-            ?: return emptyList()
-        return try {
-            val array = JSONArray(json)
-            (0 until array.length()).map {
-                val o = array.getJSONObject(it)
-                Occurrence(o.getString("t"), LocalDate.parse(o.getString("d")), o.getInt("c"))
-            }
-        } catch (e: Exception) {
-            emptyList()
+    fun occurrences(context: Context): List<Occurrence> = try {
+        val array = JSONArray(prefs(context).getString("occurrences", null) ?: "[]")
+        (0 until array.length()).map {
+            val o = array.getJSONObject(it)
+            Occurrence(o.getString("t"), LocalDate.parse(o.getString("d")), o.getInt("c"), o.optInt("r", -1))
         }
+    } catch (e: Exception) {
+        emptyList()
     }
 
-    fun monthOffset(context: Context, widgetId: Int): Int =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getInt("month_offset_$widgetId", 0)
+    fun settings(context: Context): SyncSettings = try {
+        val o = JSONObject(prefs(context).getString("settings", null) ?: "{}")
+        val kinds = o.optJSONArray("holidayKinds")
+        SyncSettings(
+            weekStartsMonday = o.optBoolean("weekStartsMonday", true),
+            holidayKinds = if (kinds == null) LunarCalendar.ALL_KINDS else (0 until kinds.length()).map { kinds.getString(it) }.toSet(),
+            reminderHour = o.optInt("reminderHour", 7),
+            reminderMinute = o.optInt("reminderMinute", 0),
+            lunarReminders = o.optBoolean("lunarReminders", false),
+        )
+    } catch (e: Exception) {
+        SyncSettings()
+    }
+
+    fun countdown(context: Context): Countdown? = try {
+        val o = JSONObject(prefs(context).getString("countdown", null) ?: return null)
+        val dates = o.getJSONArray("dates")
+        Countdown(o.getString("title"), (0 until dates.length()).map { LocalDate.parse(dates.getString(it)) })
+    } catch (e: Exception) {
+        null
+    }
+
+    fun monthOffset(context: Context, widgetId: Int): Int = prefs(context).getInt("month_offset_$widgetId", 0)
 
     fun setMonthOffset(context: Context, widgetId: Int, offset: Int) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt("month_offset_$widgetId", offset).apply()
+        prefs(context).edit().putInt("month_offset_$widgetId", offset).apply()
     }
 }
 
@@ -56,7 +91,9 @@ object Widgets {
         val manager = AppWidgetManager.getInstance(context)
         TodayWidgetProvider.update(context, manager, ids(context, manager, TodayWidgetProvider::class.java))
         MonthWidgetProvider.update(context, manager, ids(context, manager, MonthWidgetProvider::class.java))
+        CountdownWidgetProvider.update(context, manager, ids(context, manager, CountdownWidgetProvider::class.java))
         scheduleMidnight(context)
+        Reminders.reschedule(context)
     }
 
     private fun ids(context: Context, manager: AppWidgetManager, cls: Class<*>): IntArray =
@@ -64,8 +101,8 @@ object Widgets {
 
     private fun hasWidgets(context: Context): Boolean {
         val manager = AppWidgetManager.getInstance(context)
-        return ids(context, manager, TodayWidgetProvider::class.java).isNotEmpty() ||
-            ids(context, manager, MonthWidgetProvider::class.java).isNotEmpty()
+        return listOf(TodayWidgetProvider::class.java, MonthWidgetProvider::class.java, CountdownWidgetProvider::class.java)
+            .any { ids(context, manager, it).isNotEmpty() }
     }
 
     /**
@@ -100,7 +137,7 @@ object Widgets {
 
 }
 
-/** Midnight alarm, clock and time-zone changes: redraw everything. */
+/** Midnight alarm, boot, clock and time-zone changes: redraw every widget and reschedule reminders. */
 class WidgetRefreshReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) = Widgets.updateAll(context)
 }

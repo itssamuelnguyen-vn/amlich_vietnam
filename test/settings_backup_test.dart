@@ -125,7 +125,10 @@ void main() {
   testWidgets('every tab lays out with the largest text size', (tester) async {
     usePhoneScreen(tester);
     final app = await testApp(
-      events: [_gio, _gio.copyWith(title: 'Một sự kiện có cái tên rất dài để thử xuống dòng', repeat: Repeat.monthly)],
+      events: [
+        _gio,
+        _gio.copyWith(title: 'Một sự kiện có cái tên rất dài để thử xuống dòng', repeat: Repeat.monthly),
+      ],
     );
     await app.settings.update(const Settings(textScale: 1.3));
     await tester.pumpWidget(app);

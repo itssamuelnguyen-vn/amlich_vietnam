@@ -16,7 +16,7 @@ Future<void> main() async {
   final settings = SettingsStore(SqliteSettingsBackend());
   final people = PeopleStore(SqlitePeopleBackend());
   await Future.wait([events.load(), settings.load(), people.load()]);
-  WidgetBridge.attach(events);
+  WidgetBridge.attach(events, settings);
   runApp(AmLichApp(events: events, settings: settings, people: people));
 }
 

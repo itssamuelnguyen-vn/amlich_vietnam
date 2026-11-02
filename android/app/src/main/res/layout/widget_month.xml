@@ -74,20 +74,13 @@
             android:textSize="26sp" />
     </LinearLayout>
 
+    <!-- Weekday header (Monday- or Sunday-first), added in MonthWidgetProvider. -->
     <LinearLayout
+        android:id="@+id/weekdays"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:orientation="horizontal">
-
-        <TextView style="@style/WidgetWeekday" android:text="T2" />
-        <TextView style="@style/WidgetWeekday" android:text="T3" />
-        <TextView style="@style/WidgetWeekday" android:text="T4" />
-        <TextView style="@style/WidgetWeekday" android:text="T5" />
-        <TextView style="@style/WidgetWeekday" android:text="T6" />
-        <TextView style="@style/WidgetWeekday" android:text="T7" />
-        <TextView style="@style/WidgetWeekday" android:text="CN" android:textColor="@color/widget_red" />
-    </LinearLayout>
+        android:orientation="horizontal" />
 
     <!-- Six rows of seven cells, added in MonthWidgetProvider. -->
     <LinearLayout

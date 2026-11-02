@@ -6,6 +6,7 @@ import '../data/people.dart';
 import '../data/settings.dart';
 import '../events/event_store.dart';
 import '../lunar/format.dart';
+import '../widget/widget_bridge.dart';
 import '../widgets/day_sections.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -84,6 +85,44 @@ class SettingsScreen extends StatelessWidget {
                       s.copyWith(holidayKinds: on ? {...s.holidayKinds, kind} : ({...s.holidayKinds}..remove(kind))),
                     ),
                   ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          const _RemindersCard(),
+          const SizedBox(height: 16),
+          SectionCard(
+            icon: Icons.hourglass_bottom_rounded,
+            title: 'Widget đếm ngược',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                DropdownButtonFormField<int?>(
+                  // Rebuilt when the setting changes elsewhere (e.g. a restore).
+                  key: ValueKey(s.countdownEventId),
+                  initialValue: EventScope.of(context).events.any((e) => e.id == s.countdownEventId)
+                      ? s.countdownEventId
+                      : null,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: 'Đếm ngược tới',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  items: [
+                    const DropdownMenuItem(value: null, child: Text('Tết Nguyên đán')),
+                    for (final e in EventScope.of(context).events)
+                      DropdownMenuItem(
+                        value: e.id,
+                        child: Text(e.title, overflow: TextOverflow.ellipsis),
+                      ),
+                  ],
+                  onChanged: (id) => store.update(s.copyWith(countdownEventId: () => id)),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Thêm widget "Đếm ngược" từ màn hình chính: nhấn giữ chỗ trống → Tiện ích → Âm lịch.',
+                  style: TextStyle(fontSize: 12.5, color: theme.colorScheme.onSurfaceVariant),
+                ),
               ],
             ),
           ),
@@ -206,6 +245,113 @@ class _BackupCard extends StatelessWidget {
             onPressed: () => _import(context),
             icon: const Icon(Icons.restore_rounded),
             label: const Text('Khôi phục từ file'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RemindersCard extends StatefulWidget {
+  const _RemindersCard();
+
+  @override
+  State<_RemindersCard> createState() => _RemindersCardState();
+}
+
+class _RemindersCardState extends State<_RemindersCard> with WidgetsBindingObserver {
+  bool _enabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _check();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // Coming back from the phone's settings may have changed the permission.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _check();
+  }
+
+  Future<void> _check() async {
+    final enabled = await WidgetBridge.notificationsEnabled();
+    if (mounted) setState(() => _enabled = enabled);
+  }
+
+  Future<void> _request() async {
+    final enabled = await WidgetBridge.requestNotificationPermission();
+    if (mounted) setState(() => _enabled = enabled);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final store = SettingsScope.of(context);
+    final s = store.value;
+    final scheme = Theme.of(context).colorScheme;
+    return SectionCard(
+      icon: Icons.notifications_outlined,
+      title: 'Nhắc nhở',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (!_enabled)
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: scheme.errorContainer, borderRadius: BorderRadius.circular(14)),
+              child: Row(
+                children: [
+                  Icon(Icons.notifications_off_outlined, color: scheme.onErrorContainer),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Thông báo đang bị tắt nên sẽ không có nhắc nhở.',
+                      style: TextStyle(color: scheme.onErrorContainer),
+                    ),
+                  ),
+                  TextButton(onPressed: _request, child: const Text('Bật')),
+                ],
+              ),
+            ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.schedule_rounded),
+            title: const Text('Giờ nhắc'),
+            subtitle: const Text('Áp dụng cho mọi nhắc nhở'),
+            trailing: Text(
+              '${two(s.reminderHour)}:${two(s.reminderMinute)}',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+            onTap: () async {
+              final t = await showTimePicker(
+                context: context,
+                initialTime: TimeOfDay(hour: s.reminderHour, minute: s.reminderMinute),
+              );
+              if (t != null) await store.update(s.copyWith(reminderHour: t.hour, reminderMinute: t.minute));
+            },
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            secondary: const Icon(Icons.brightness_3_outlined),
+            title: const Text('Nhắc trước mùng 1 và rằm'),
+            subtitle: const Text('Thông báo vào hôm trước, để kịp chuẩn bị hương hoa'),
+            value: s.lunarReminders,
+            onChanged: (on) async {
+              await store.update(s.copyWith(lunarReminders: on));
+              if (on) await _request();
+            },
+          ),
+          Text(
+            'Mỗi sự kiện chọn nhắc trước bao nhiêu ngày ngay trong màn hình sửa sự kiện.',
+            style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant),
           ),
         ],
       ),

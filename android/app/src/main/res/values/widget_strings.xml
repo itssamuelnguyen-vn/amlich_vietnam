@@ -2,4 +2,5 @@
 <resources>
     <string name="widget_today_description">Hôm nay: ngày dương, ngày âm, Can Chi và sự kiện sắp tới</string>
     <string name="widget_month_description">Lịch tháng có ngày âm và sự kiện</string>
+    <string name="widget_countdown_description">Đếm ngược tới Tết hoặc sự kiện bạn chọn</string>
 </resources>

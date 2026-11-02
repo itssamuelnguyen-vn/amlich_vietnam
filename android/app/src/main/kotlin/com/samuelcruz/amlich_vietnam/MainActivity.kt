@@ -1,7 +1,11 @@
 package com.samuelcruz.amlich_vietnam
 
+import android.Manifest
 import android.app.Activity
+import android.app.NotificationManager
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -10,8 +14,9 @@ import io.flutter.plugin.common.MethodChannel
  * Hosts Flutter and two channels.
  *
  * "amlich/widget":
- * - Flutter → Android: `updateWidgets` stores the upcoming event occurrences and redraws the widgets;
- *   `takeLaunchDate` returns the date a widget tap opened the app on (once).
+ * - Flutter → Android: `sync` stores event occurrences, settings and the countdown target, then redraws the
+ *   widgets and reschedules reminders; `takeLaunchDate` returns the date a widget or notification tap opened the app
+ *   on (once); `notificationsEnabled` / `requestNotificationPermission` for reminders.
  * - Android → Flutter: `showDate` when a widget tap reaches the already running app.
  *
  * "amlich/files": `saveText` / `openText` through the system document picker (backup and restore).
@@ -22,6 +27,7 @@ class MainActivity : FlutterActivity() {
 
     private var pendingFile: MethodChannel.Result? = null
     private var pendingText: String? = null
+    private var pendingPermission: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -30,10 +36,27 @@ class MainActivity : FlutterActivity() {
         widgetChannel = MethodChannel(messenger, "amlich/widget").apply {
             setMethodCallHandler { call, result ->
                 when (call.method) {
-                    "updateWidgets" -> {
-                        WidgetData.saveOccurrences(this@MainActivity, call.argument<String>("occurrences") ?: "[]")
+                    "sync" -> {
+                        WidgetData.save(
+                            this@MainActivity,
+                            call.argument<String>("occurrences") ?: "[]",
+                            call.argument<String>("settings") ?: "{}",
+                            call.argument<String>("countdown") ?: "{}",
+                        )
                         Widgets.updateAll(this@MainActivity)
                         result.success(null)
+                    }
+                    "notificationsEnabled" ->
+                        result.success(getSystemService(NotificationManager::class.java).areNotificationsEnabled())
+                    "requestNotificationPermission" -> {
+                        if (Build.VERSION.SDK_INT < 33 ||
+                            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            result.success(getSystemService(NotificationManager::class.java).areNotificationsEnabled())
+                        } else {
+                            pendingPermission = result
+                            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQUEST_NOTIFICATIONS)
+                        }
                     }
                     "takeLaunchDate" -> {
                         result.success(launchDate)
@@ -94,6 +117,13 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != REQUEST_NOTIFICATIONS) return
+        pendingPermission?.success(grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED)
+        pendingPermission = null
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         dateOf(intent)?.let { widgetChannel?.invokeMethod("showDate", it) }
@@ -106,5 +136,6 @@ class MainActivity : FlutterActivity() {
     private companion object {
         const val REQUEST_SAVE = 4101
         const val REQUEST_OPEN = 4102
+        const val REQUEST_NOTIFICATIONS = 4103
     }
 }

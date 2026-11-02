@@ -148,11 +148,16 @@ object LunarCalendar {
 
     fun monthName(l: LunarDate) = "tháng ${MONTH_NAMES[l.month - 1]}${if (l.leap) " (nhuận)" else ""}"
 
+    /** Holiday groups, named as HolidayKind in lib/data/settings.dart. */
+    val ALL_KINDS = setOf("lunar", "vietnam", "international")
+
     private val SOLAR_HOLIDAYS = mapOf(
-        (1 to 1) to "Tết Dương lịch", (14 to 2) to "Lễ Tình nhân", (8 to 3) to "Quốc tế Phụ nữ",
-        (30 to 4) to "Giải phóng miền Nam", (1 to 5) to "Quốc tế Lao động", (1 to 6) to "Quốc tế Thiếu nhi",
-        (2 to 9) to "Quốc khánh", (20 to 10) to "Phụ nữ Việt Nam", (20 to 11) to "Nhà giáo Việt Nam",
-        (22 to 12) to "Quân đội Nhân dân", (24 to 12) to "Giáng sinh",
+        (1 to 1) to ("Tết Dương lịch" to "vietnam"), (14 to 2) to ("Lễ Tình nhân" to "international"),
+        (8 to 3) to ("Quốc tế Phụ nữ" to "international"), (30 to 4) to ("Giải phóng miền Nam" to "vietnam"),
+        (1 to 5) to ("Quốc tế Lao động" to "vietnam"), (1 to 6) to ("Quốc tế Thiếu nhi" to "international"),
+        (2 to 9) to ("Quốc khánh" to "vietnam"), (20 to 10) to ("Phụ nữ Việt Nam" to "vietnam"),
+        (20 to 11) to ("Nhà giáo Việt Nam" to "vietnam"), (22 to 12) to ("Quân đội Nhân dân" to "vietnam"),
+        (24 to 12) to ("Giáng sinh" to "international"),
     )
     private val LUNAR_HOLIDAYS = mapOf(
         (1 to 1) to "Tết Nguyên đán", (2 to 1) to "Mùng 2 Tết", (3 to 1) to "Mùng 3 Tết",
@@ -161,10 +166,13 @@ object LunarCalendar {
         (23 to 12) to "Ông Công Ông Táo",
     )
 
-    /** Holidays on a day, as holidaysOf in lib/lunar/holidays.dart. */
-    fun holidays(dd: Int, mm: Int, lunar: LunarDate): List<String> = listOfNotNull(
-        SOLAR_HOLIDAYS[dd to mm],
-        if (!lunar.leap) LUNAR_HOLIDAYS[lunar.day to lunar.month] else null,
-        if (!lunar.leap && lunar.month == 12 && lunar.day == lunar.monthLength) "Giao thừa" else null,
-    )
+    /** Holidays on a day in the groups [kinds], as holidaysOf in lib/lunar/holidays.dart. */
+    fun holidays(dd: Int, mm: Int, lunar: LunarDate, kinds: Set<String> = ALL_KINDS): List<String> {
+        val traditional = "lunar" in kinds && !lunar.leap
+        return listOfNotNull(
+            SOLAR_HOLIDAYS[dd to mm]?.takeIf { it.second in kinds }?.first,
+            if (traditional) LUNAR_HOLIDAYS[lunar.day to lunar.month] else null,
+            if (traditional && lunar.month == 12 && lunar.day == lunar.monthLength) "Giao thừa" else null,
+        )
+    }
 }

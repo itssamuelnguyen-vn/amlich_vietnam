@@ -49,7 +49,8 @@ class TodayWidgetProvider : AppWidgetProvider() {
             val (star, good) = LunarCalendar.dayStar(jd, lunar.month)
             views.setTextViewText(R.id.star, "${if (good) "✦ Hoàng đạo" else "Hắc đạo"} · $star")
 
-            val holiday = LunarCalendar.holidays(date.dayOfMonth, date.monthValue, lunar).firstOrNull()
+            val kinds = WidgetData.settings(context).holidayKinds
+            val holiday = LunarCalendar.holidays(date.dayOfMonth, date.monthValue, lunar, kinds).firstOrNull()
             val next = WidgetData.occurrences(context).firstOrNull { !it.date.isBefore(date) }
             val line = when {
                 holiday != null -> "🎉 $holiday"

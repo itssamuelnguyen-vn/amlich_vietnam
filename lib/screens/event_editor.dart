@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../data/settings.dart';
 import '../events/event.dart';
 import '../events/event_store.dart';
 import '../lunar/format.dart';
 import '../lunar/lunar_calendar.dart';
 import '../theme.dart';
+import '../widget/widget_bridge.dart';
 import '../widgets/date_inputs.dart';
 
 /// Opens the editor for a new event on [date], or for [event] when given.
@@ -33,6 +35,8 @@ class _EventEditorState extends State<EventEditor> {
   late EventCalendar _calendar = widget.event?.calendar ?? EventCalendar.solar;
   late Repeat _repeat = widget.event?.repeat ?? Repeat.none;
   late int _color = widget.event?.color ?? 0;
+  // New events remind a day ahead by default; that is what death anniversaries and birthdays need.
+  late int _remindDays = widget.event?.remindDays ?? 1;
   late DateTime _solar;
   late LunarDate _lunar;
   bool _titleError = false;
@@ -72,6 +76,17 @@ class _EventEditorState extends State<EventEditor> {
     });
   }
 
+  Future<void> _setReminder(int days) async {
+    setState(() => _remindDays = days);
+    if (days == Event.noReminder) return;
+    final messenger = ScaffoldMessenger.of(context);
+    if (!await WidgetBridge.requestNotificationPermission()) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Thông báo đang bị tắt. Bật lại trong Cài đặt của điện thoại để nhận nhắc nhở.')),
+      );
+    }
+  }
+
   Future<void> _save() async {
     final title = _title.text.trim();
     if (title.isEmpty) {
@@ -90,6 +105,7 @@ class _EventEditorState extends State<EventEditor> {
       leap: lunar && _lunar.isLeap,
       repeat: _repeat,
       color: _color,
+      remindDays: _remindDays,
     );
     await EventScope.of(context).save(event);
     if (mounted) Navigator.pop(context);
@@ -194,6 +210,32 @@ class _EventEditorState extends State<EventEditor> {
                 style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12.5),
               ),
             ),
+          const SizedBox(height: 20),
+          _Label('Nhắc trước'),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              for (final (days, label) in const [
+                (Event.noReminder, 'Không nhắc'),
+                (0, 'Đúng ngày'),
+                (1, '1 ngày'),
+                (3, '3 ngày'),
+                (7, '7 ngày'),
+              ])
+                ChoiceChip(label: Text(label), selected: _remindDays == days, onSelected: (_) => _setReminder(days)),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              _remindDays == Event.noReminder
+                  ? 'Không có thông báo cho sự kiện này.'
+                  : 'Thông báo lúc ${two(SettingsScope.of(context).value.reminderHour)}:'
+                        '${two(SettingsScope.of(context).value.reminderMinute)} (đổi giờ trong Cài đặt).',
+              style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12.5),
+            ),
+          ),
           const SizedBox(height: 20),
           _Label('Màu'),
           Wrap(

@@ -130,11 +130,21 @@ class EventTile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        event.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15.5),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              event.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15.5),
+                            ),
+                          ),
+                          if (event.remindDays != Event.noReminder) ...[
+                            const SizedBox(width: 4),
+                            Icon(Icons.notifications_active_outlined, size: 15, color: color),
+                          ],
+                        ],
                       ),
                       const SizedBox(height: 2),
                       Row(

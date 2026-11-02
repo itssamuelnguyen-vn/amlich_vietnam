@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Event reminders (asked for at runtime on Android 13+), rescheduled after a reboot. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <application
         android:label="Âm lịch"
         android:name="${applicationName}"
@@ -48,13 +51,28 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_month_info" />
         </receiver>
-        <!-- Midnight refresh; clock and time-zone changes are system broadcasts still delivered to manifest receivers. -->
+        <receiver
+            android:name=".CountdownWidgetProvider"
+            android:exported="false"
+            android:label="Đếm ngược">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_countdown_info" />
+        </receiver>
+        <receiver
+            android:name=".ReminderReceiver"
+            android:exported="false" />
+        <!-- Midnight refresh; boot, clock and time-zone changes are system broadcasts still delivered to manifest receivers. -->
         <receiver
             android:name=".WidgetRefreshReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
         <!-- Don't delete the meta-data below.

@@ -76,12 +76,26 @@ class MonthWidgetProvider : AppWidgetProvider() {
             views.setOnClickPendingIntent(R.id.today, navIntent(context, id, ACTION_TODAY, 3))
             views.setOnClickPendingIntent(R.id.title_area, Widgets.openApp(context, month, id * 100))
 
+            val settings = WidgetData.settings(context)
+            views.removeAllViews(R.id.weekdays)
+            views.addView(
+                R.id.weekdays,
+                RemoteViews(
+                    context.packageName,
+                    if (settings.weekStartsMonday) R.layout.widget_month_weekdays_mon else R.layout.widget_month_weekdays_sun,
+                ),
+            )
             views.removeAllViews(R.id.grid)
-            var day = month.minusDays((month.dayOfWeek.value - DayOfWeek.MONDAY.value).toLong())
+            // First day of the week containing the 1st (DayOfWeek: Monday = 1 … Sunday = 7).
+            val back = if (settings.weekStartsMonday) month.dayOfWeek.value - 1 else month.dayOfWeek.value % 7
+            var day = month.minusDays(back.toLong())
             for (week in 0 until 6) {
                 val row = RemoteViews(context.packageName, R.layout.widget_month_row)
                 for (d in 0 until 7) {
-                    row.addView(R.id.row, cell(context, day, today, month, occurrences[day], id * 100 + week * 7 + d + 1))
+                    row.addView(
+                        R.id.row,
+                        cell(context, day, today, month, occurrences[day], settings.holidayKinds, id * 100 + week * 7 + d + 1),
+                    )
                     day = day.plusDays(1)
                 }
                 views.addView(R.id.grid, row)
@@ -95,10 +109,11 @@ class MonthWidgetProvider : AppWidgetProvider() {
             today: LocalDate,
             month: LocalDate,
             colors: List<Int>?,
+            kinds: Set<String>,
             requestCode: Int,
         ): RemoteViews {
             val lunar = LunarCalendar.solarToLunar(date.dayOfMonth, date.monthValue, date.year)
-            val holiday = LunarCalendar.holidays(date.dayOfMonth, date.monthValue, lunar).isNotEmpty()
+            val holiday = LunarCalendar.holidays(date.dayOfMonth, date.monthValue, lunar, kinds).isNotEmpty()
             val layout = when {
                 date == today -> R.layout.widget_cell_today
                 date.monthValue != month.monthValue -> R.layout.widget_cell_other
