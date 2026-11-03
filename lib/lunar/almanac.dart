@@ -194,3 +194,169 @@ class AgeInfo {
       if (b != branch) chi[b],
   ];
 }
+
+// ---------------------------------------------------------------------------------------------------------------
+// Giờ xuất hành Lý Thuần Phong, Bành Tổ bách kỵ
+
+/// The six travel-hour states of Lý Thuần Phong, in the order they follow each other hour by hour.
+const List<(String name, bool good, String meaning)> lyThuanPhong = [
+  ('Đại An', true, 'Mọi việc tốt lành, nhà cửa yên ổn, người đi bình yên.'),
+  ('Tốc Hỷ', true, 'Tin vui sắp tới, cầu tài, việc quan đều thuận; người đi có tin mừng.'),
+  ('Lưu Niên', false, 'Việc khó thành, cầu tài mờ mịt, kiện cáo nên hoãn; người đi chưa có tin.'),
+  ('Xích Khẩu', false, 'Dễ cãi cọ, thị phi; nên đề phòng, việc đi xa nên hoãn lại.'),
+  ('Tiểu Cát', true, 'Rất tốt lành, buôn bán có lời, người đi sắp về, mọi việc hòa hợp.'),
+  ('Không Vong', false, 'Còn gọi Tuyệt lộ: cầu tài không lợi, hay trái ý, đi xa dễ gặp hạn.'),
+];
+
+/// For each of the 12 two-hour periods (0 = giờ Tý), the Lý Thuần Phong state of [lunar]'s day: giờ Tý takes
+/// position (month + day − 2) mod 6 and each later period moves one step, so giờ Tý and giờ Ngọ always match.
+/// Checked against a published almanac on four dates (test/almanac_test.dart).
+List<int> lyThuanPhongHours(LunarDate lunar) => [for (var h = 0; h < 12; h++) (lunar.month + lunar.day - 2 + h) % 6];
+
+/// Bành Tổ's hundred taboos: (Hán Việt line, meaning) for each day stem and branch.
+const List<(String, String)> banhToCan = [
+  ('Giáp bất khai thương, tài vật hao vong', 'Ngày Giáp không nên mở kho, tiền của hao mất'),
+  ('Ất bất tài thực, thiên chu bất trưởng', 'Ngày Ất không nên gieo trồng, ngàn gốc không lên'),
+  ('Bính bất tu táo, tất kiến hỏa ương', 'Ngày Bính không nên sửa bếp, sẽ gặp tai họa về lửa'),
+  ('Đinh bất thế đầu, đầu chủ sinh sang', 'Ngày Đinh không nên cắt tóc, đầu sẽ sinh nhọt'),
+  ('Mậu bất thụ điền, điền chủ bất tường', 'Ngày Mậu không nên nhận ruộng đất, chủ không được lành'),
+  ('Kỷ bất phá khoán, nhị chủ tịnh vong', 'Ngày Kỷ không nên phá bỏ giao kèo, hai bên đều thiệt'),
+  ('Canh bất kinh lạc, chức cơ hư trướng', 'Ngày Canh không nên dệt cửi, khung cửi bỏ không'),
+  ('Tân bất hợp tương, chủ nhân bất thường', 'Ngày Tân không nên làm tương, chủ không được nếm'),
+  ('Nhâm bất ương thủy, cánh nan đê phòng', 'Ngày Nhâm không nên tháo nước, khó bề đề phòng'),
+  ('Quý bất từ tụng, lý nhược địch cường', 'Ngày Quý không nên kiện tụng, lý yếu địch mạnh'),
+];
+
+const List<(String, String)> banhToChi = [
+  ('Tý bất vấn bốc, tự nhạ tai ương', 'Ngày Tý không nên gieo quẻ hỏi, tự rước lấy tai ương'),
+  ('Sửu bất quan đới, chủ bất hoàn hương', 'Ngày Sửu không nên làm lễ đội mũ, chủ không về quê'),
+  ('Dần bất tế tự, quỷ thần bất thường', 'Ngày Dần không nên cúng tế, thần linh không hưởng'),
+  ('Mão bất xuyên tỉnh, tuyền thủy bất hương', 'Ngày Mão không nên đào giếng, nước sẽ không trong lành'),
+  ('Thìn bất khốc khấp, tất chủ trọng tang', 'Ngày Thìn không nên khóc lóc, dễ có trùng tang'),
+  ('Tỵ bất viễn hành, tài vật phục tàng', 'Ngày Tỵ không nên đi xa, tiền của mất mát'),
+  ('Ngọ bất thiêm cái, ốc chủ canh trương', 'Ngày Ngọ không nên lợp nhà, chủ nhà phải làm lại'),
+  ('Mùi bất phục dược, độc khí nhập tràng', 'Ngày Mùi không nên uống thuốc, độc khí vào ruột'),
+  ('Thân bất an sàng, quỷ túy nhập phòng', 'Ngày Thân không nên kê giường, ma quỷ vào phòng'),
+  ('Dậu bất hội khách, tân chủ hữu thương', 'Ngày Dậu không nên hội khách, tân chủ có hại'),
+  ('Tuất bất cật khuyển, tác quái thượng sàng', 'Ngày Tuất không nên ăn thịt chó, ma quái quấy nhiễu'),
+  ('Hợi bất giá thú, bất lợi tân lang', 'Ngày Hợi không nên cưới gả, bất lợi cho chú rể'),
+];
+
+// ---------------------------------------------------------------------------------------------------------------
+// Xem tuổi làm nhà: Kim lâu, Hoang ốc, Tam tai
+
+/// Kim lâu by Vietnamese age (tuổi mụ) mod 9: 1 thân (self), 3 thê (spouse), 6 tử (children), 8 lục súc (livestock).
+String? kimLau(int age) => switch (age % 9) {
+  1 => 'Kim lâu thân (hại bản thân)',
+  3 => 'Kim lâu thê (hại vợ/chồng)',
+  6 => 'Kim lâu tử (hại con cái)',
+  8 => 'Kim lâu lục súc (hại vật nuôi, tài sản)',
+  _ => null,
+};
+
+/// Hoang ốc's six palaces; the 1st, 2nd and 4th are good.
+const List<(String, bool)> hoangOcCung = [
+  ('Nhất Cát', true),
+  ('Nhì Nghi', true),
+  ('Tam Địa Sát', false),
+  ('Tứ Tấn Tài', true),
+  ('Ngũ Thọ Tử', false),
+  ('Lục Hoang Ốc', false),
+];
+
+/// Hoang ốc palace for a Vietnamese age: the sum of its digits mod 6 (10 is Nhất Cát, 24 is Lục Hoang Ốc, 25 Nhất Cát).
+(String, bool) hoangOc(int age) {
+  final digits = age.toString().split('').fold(0, (s, d) => s + int.parse(d));
+  return hoangOcCung[(digits - 1) % 6];
+}
+
+/// The three years of Tam tai for someone born in a year of [branch]: Thân Tý Thìn → Dần Mão Thìn, Dần Ngọ Tuất →
+/// Thân Dậu Tuất, Hợi Mão Mùi → Tỵ Ngọ Mùi, Tỵ Dậu Sửu → Hợi Tý Sửu.
+List<int> tamTaiBranches(int branch) {
+  final start = switch (branch % 4) {
+    0 => 2, // Thân Tý Thìn
+    2 => 8, // Dần Ngọ Tuất
+    3 => 5, // Hợi Mão Mùi
+    _ => 11, // Tỵ Dậu Sửu
+  };
+  return [start, (start + 1) % 12, (start + 2) % 12];
+}
+
+/// Building-a-house check for someone born in lunar year [birthYear], in lunar year [year].
+class HouseCheck {
+  HouseCheck(this.birthYear, this.year)
+    : age = year - birthYear + 1,
+      tamTai = tamTaiBranches(yearBranch(birthYear)).contains(yearBranch(year));
+
+  final int birthYear;
+  final int year;
+  final int age;
+  final bool tamTai;
+
+  String? get kimLauText => kimLau(age);
+  (String, bool) get hoangOcPalace => hoangOc(age);
+  bool get good => kimLauText == null && hoangOcPalace.$2 && !tamTai;
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Xem tuổi vợ chồng
+
+const _elements = ['Kim', 'Thủy', 'Mộc', 'Hỏa', 'Thổ']; // each produces the next
+
+/// How element [a] relates to [b]: "sinh" (one produces the other), "khắc" (one overcomes the other) or "hòa" (same).
+String elementRelation(String a, String b) {
+  if (a == b) return 'hòa';
+  final i = _elements.indexOf(a), j = _elements.indexOf(b);
+  return (i + 1) % 5 == j || (j + 1) % 5 == i ? 'sinh' : 'khắc';
+}
+
+/// Stems that combine (Giáp–Kỷ, Ất–Canh, Bính–Tân, Đinh–Nhâm, Mậu–Quý) or clash (Giáp–Canh, Ất–Tân, Bính–Nhâm,
+/// Đinh–Quý); Mậu and Kỷ clash with nothing.
+String stemRelation(int a, int b) {
+  final d = (a - b).abs();
+  if (d == 5) return 'hợp';
+  if (d == 6 || d == 4) {
+    final pair = {a, b};
+    const clashes = [
+      {0, 6},
+      {1, 7},
+      {2, 8},
+      {3, 9},
+    ];
+    if (clashes.any((c) => c.containsAll(pair))) return 'xung';
+  }
+  return 'bình';
+}
+
+/// Branches in triple or six harmony, in six clash (lục xung), or neither.
+String branchRelation(int a, int b) {
+  if (a == b) return 'bình';
+  if (tripleHarmonyOf(a).contains(b) || sixHarmonyOf(a) == b) return 'hợp';
+  if (clashOf(a) == b) return 'xung';
+  return 'bình';
+}
+
+/// Marriage compatibility of two birth years: element, stem and branch, each "good", "neutral" or "bad".
+class CoupleCheck {
+  CoupleCheck(this.husband, this.wife);
+
+  final int husband;
+  final int wife;
+
+  AgeInfo get h => AgeInfo(husband);
+  AgeInfo get w => AgeInfo(wife);
+
+  String get element => elementRelation(h.element, w.element);
+  String get stem => stemRelation((husband + 6) % 10, (wife + 6) % 10);
+  String get branch => branchRelation(h.branch, w.branch);
+
+  /// 0–3 points: one each for elements that produce each other (or match), combining stems, harmonious branches;
+  /// clashes take a point away.
+  int get score {
+    var s = 0;
+    s += element == 'khắc' ? 0 : 1;
+    s += stem == 'hợp' ? 1 : (stem == 'xung' ? -1 : 0);
+    s += branch == 'hợp' ? 1 : (branch == 'xung' ? -1 : 0);
+    return s.clamp(0, 3);
+  }
+}

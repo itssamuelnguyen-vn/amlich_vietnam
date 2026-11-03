@@ -1,5 +1,6 @@
 import 'package:amlich_vietnam/data/people.dart';
 import 'package:amlich_vietnam/lunar/almanac.dart';
+import 'package:amlich_vietnam/lunar/lunar_calendar.dart';
 import 'package:amlich_vietnam/widgets/good_days_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -76,6 +77,59 @@ void main() {
     }
     // Best first.
     expect(days.first.score, greaterThanOrEqualTo(days.last.score));
+  });
+
+  // Read from doanhnghiephoinhap.vn daily pages on 2026-11-03.
+  test('Lý Thuần Phong travel hours match a published almanac', () {
+    final cases = {
+      DateTime(2026, 3, 12): (const LunarDate(24, 1, 2026), 'Không Vong'),
+      DateTime(2025, 12, 21): (const LunarDate(2, 11, 2025), 'Không Vong'),
+      DateTime(2026, 6, 10): (const LunarDate(25, 4, 2026), 'Xích Khẩu'),
+    };
+    cases.forEach((date, e) {
+      final lunar = solarToLunar(date);
+      expect(lunar, e.$1, reason: '$date');
+      expect(lyThuanPhong[lyThuanPhongHours(lunar)[0]].$1, e.$2, reason: '$date giờ Tý');
+    });
+    // 25/4/2026: Sửu Tiểu Cát, Dần Không Vong, Mão Đại An, Thìn Tốc Hỷ, Tỵ Lưu Niên, and Ngọ repeats Tý.
+    final hours = lyThuanPhongHours(const LunarDate(25, 4, 2026)).map((i) => lyThuanPhong[i].$1).toList();
+    expect(hours.sublist(1, 7), ['Tiểu Cát', 'Không Vong', 'Đại An', 'Tốc Hỷ', 'Lưu Niên', 'Xích Khẩu']);
+  });
+
+  test('Bành Tổ lines for the stem and branch of the day', () {
+    final a = DayAlmanac(DateTime(2025, 12, 21)); // Giáp Tý
+    expect(banhToCan[a.dayStem].$1, startsWith('Giáp bất khai thương'));
+    expect(banhToChi[a.dayBranch].$1, startsWith('Tý bất vấn bốc'));
+    final b = DayAlmanac(DateTime(2026, 3, 12)); // Ất Dậu
+    expect(banhToCan[b.dayStem].$2, contains('gieo trồng'));
+    expect(banhToChi[b.dayBranch].$1, startsWith('Dậu bất hội khách'));
+  });
+
+  test('house building: Kim lâu, Hoang ốc, Tam tai', () {
+    expect(hoangOc(10).$1, 'Nhất Cát');
+    expect(hoangOc(24).$1, 'Lục Hoang Ốc');
+    expect(hoangOc(25).$1, 'Nhất Cát');
+    expect(hoangOc(28).$1, 'Tứ Tấn Tài');
+    expect(hoangOc(33).$1, 'Lục Hoang Ốc');
+    expect(kimLau(37), startsWith('Kim lâu thân'));
+    expect(kimLau(39), startsWith('Kim lâu thê'));
+    expect(kimLau(38), isNull);
+    // Born 1990 (Ngọ): Tam tai in Thân, Dậu, Tuất years.
+    expect(HouseCheck(1990, 2028).tamTai, isTrue);
+    expect(HouseCheck(1990, 2026).tamTai, isFalse);
+    expect(HouseCheck(1990, 2026).age, 37);
+  });
+
+  test('couple compatibility', () {
+    final c = CoupleCheck(1990, 1992); // Canh Ngọ (Thổ) and Nhâm Thân (Kim): Thổ sinh Kim
+    expect(c.element, 'sinh');
+    expect(c.stem, 'bình');
+    expect(c.branch, 'bình');
+    expect(c.score, 1);
+    expect(CoupleCheck(1984, 1989).stem, 'hợp'); // Giáp – Kỷ
+    expect(CoupleCheck(1984, 1990).stem, 'xung'); // Giáp – Canh
+    expect(CoupleCheck(1984, 1990).branch, 'xung'); // Tý – Ngọ
+    expect(CoupleCheck(1984, 1992).branch, 'hợp'); // Tý – Thân (tam hợp)
   });
 
   testWidgets('family ages show clash warnings on the calendar and good-day search runs', (tester) async {

@@ -39,6 +39,8 @@ class ToolsScreen extends StatelessWidget {
           const SizedBox(height: 16),
           const FamilyCard(),
           const SizedBox(height: 16),
+          const CoupleCard(),
+          const SizedBox(height: 16),
           const _DistanceCard(),
           const SizedBox(height: 16),
           _AddCard(onShowDate: onShowDate),

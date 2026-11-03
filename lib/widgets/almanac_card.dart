@@ -53,6 +53,8 @@ class AlmanacCard extends StatelessWidget {
           _Row('Xuất hành', 'Hỷ thần: ${a.hyThan}', 'Tài thần: ${a.taiThan}'),
           _Row('Tuổi xung', 'Tuổi ${chi[a.clashBranch]}', 'Lục xung với ngày ${chi[a.dayBranch]}'),
           _Row('Tuổi hợp', harmony.join(', '), 'Tam hợp và lục hợp'),
+          _Row('Bành Tổ', banhToCan[a.dayStem].$2, banhToCan[a.dayStem].$1),
+          _Row('', banhToChi[a.dayBranch].$2, banhToChi[a.dayBranch].$1),
           const SizedBox(height: 6),
           Text(
             'Theo quan niệm dân gian, chỉ để tham khảo.',
@@ -126,4 +128,72 @@ class _Warning extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// "Giờ xuất hành" by Lý Thuần Phong: the six states of the day with their two-hour periods.
+class TravelHoursCard extends StatelessWidget {
+  const TravelHoursCard({super.key, required this.date});
+
+  final DateTime date;
+
+  static String _range(int h) => '${(2 * h + 23) % 24}h–${(2 * h + 1) % 24}h';
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final lich = context.lich;
+    final states = lyThuanPhongHours(solarToLunar(date));
+    return SectionCard(
+      icon: Icons.directions_walk_rounded,
+      title: 'Giờ xuất hành',
+      trailing: Text('Lý Thuần Phong', style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+      child: Column(
+        children: [
+          // In the order of the day, starting from giờ Tý.
+          for (var s in {for (var h = 0; h < 6; h++) states[h]})
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 84,
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: (lyThuanPhong[s].$2 ? lich.goodDay : scheme.onSurfaceVariant).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      lyThuanPhong[s].$1,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: lyThuanPhong[s].$2 ? lich.goodDay : scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          [
+                            for (var h = 0; h < 12; h++)
+                              if (states[h] == s) _range(h),
+                          ].join(', '),
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        Text(lyThuanPhong[s].$3, style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }

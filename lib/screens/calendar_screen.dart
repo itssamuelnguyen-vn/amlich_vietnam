@@ -180,6 +180,8 @@ class CalendarScreenState extends State<CalendarScreen> {
                   const SizedBox(height: 16),
                   LuckyHoursCard(date: _selected),
                   const SizedBox(height: 16),
+                  TravelHoursCard(date: _selected),
+                  const SizedBox(height: 16),
                   UpcomingCard(items: _upcomingFor(SettingsScope.of(context).value.holidayKinds), onTap: _select),
                 ],
               ),

@@ -66,6 +66,7 @@ class _AgeLookupCardState extends State<AgeLookupCard> {
               'Mệnh ${info.element} · ${info.napAm}',
               'Tam hợp: ${info.tripleHarmony.join(', ')} · Lục hợp: ${info.sixHarmony}',
               'Tứ hành xung: ${info.fourClash.join(', ')}',
+              for (final y in [currentYear, currentYear + 1]) _houseLine(HouseCheck(_year, y)),
             ],
           ),
           const SizedBox(height: 8),
@@ -73,6 +74,85 @@ class _AgeLookupCardState extends State<AgeLookupCard> {
             onPressed: _save,
             icon: const Icon(Icons.person_add_alt_rounded),
             label: const Text('Lưu vào tuổi cả nhà'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Làm nhà năm 2026 (37 tuổi): tốt" or the problems found.
+String _houseLine(HouseCheck c) {
+  final problems = [?c.kimLauText, if (!c.hoangOcPalace.$2) c.hoangOcPalace.$1, if (c.tamTai) 'Tam tai'];
+  return 'Làm nhà năm ${c.year} (${c.age} tuổi): ${problems.isEmpty ? 'tốt (${c.hoangOcPalace.$1})' : 'phạm ${problems.join(', ')}'}';
+}
+
+/// "Xem tuổi vợ chồng": elements, stems and branches of two birth years.
+class CoupleCard extends StatefulWidget {
+  const CoupleCard({super.key});
+
+  @override
+  State<CoupleCard> createState() => _CoupleCardState();
+}
+
+class _CoupleCardState extends State<CoupleCard> {
+  int _husband = 1990;
+  int _wife = 1992;
+
+  static const _verdict = ['Nên cân nhắc', 'Bình thường', 'Khá hợp', 'Rất hợp'];
+
+  Widget _picker(String label, int value, ValueChanged<int> onChanged) {
+    final currentYear = solarToLunar(today()).year;
+    return DropdownButtonFormField<int>(
+      initialValue: value,
+      isExpanded: true,
+      menuMaxHeight: 360,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+      items: [
+        for (var y = currentYear; y >= 1900; y--) DropdownMenuItem(value: y, child: Text('$y · ${canChiYear(y)}')),
+      ],
+      onChanged: (y) => onChanged(y!),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = CoupleCheck(_husband, _wife);
+    final scheme = Theme.of(context).colorScheme;
+    String mark(String relation, {required List<String> good, required List<String> bad}) =>
+        good.contains(relation) ? '✓' : (bad.contains(relation) ? '✗' : '–');
+    return SectionCard(
+      icon: Icons.favorite_border_rounded,
+      title: 'Xem tuổi vợ chồng',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(child: _picker('Chồng', _husband, (y) => setState(() => _husband = y))),
+              const SizedBox(width: 10),
+              Expanded(child: _picker('Vợ', _wife, (y) => setState(() => _wife = y))),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ResultBox(
+            big: _verdict[c.score],
+            lines: [
+              '${mark(c.element, good: ['sinh', 'hòa'], bad: ['khắc'])} Mệnh: ${c.h.element} và ${c.w.element} '
+                  '(${c.element == 'khắc' ? 'tương khắc' : (c.element == 'sinh' ? 'tương sinh' : 'cùng hành')})',
+              '${mark(c.stem, good: ['hợp'], bad: ['xung'])} Thiên can: ${c.h.canChi.split(' ').first} – '
+                  '${c.w.canChi.split(' ').first} (${c.stem})',
+              '${mark(c.branch, good: ['hợp'], bad: ['xung'])} Địa chi: ${c.h.canChi.split(' ').last} – '
+                  '${c.w.canChi.split(' ').last} (${c.branch})',
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Xét mệnh nạp âm, thiên can và địa chi. Theo quan niệm dân gian, chỉ để tham khảo.',
+            style: TextStyle(fontSize: 11.5, color: scheme.onSurfaceVariant, fontStyle: FontStyle.italic),
           ),
         ],
       ),
