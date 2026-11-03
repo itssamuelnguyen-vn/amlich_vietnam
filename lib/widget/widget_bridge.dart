@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import '../counters/counter.dart';
 import '../data/settings.dart';
 import '../events/event.dart';
 import '../events/event_store.dart';
@@ -19,12 +20,13 @@ class WidgetBridge {
 
   static const _channel = MethodChannel('amlich/widget');
 
-  /// Pushes now and after every change to [events] or [settings].
-  static void attach(EventStore events, SettingsStore settings) {
-    void push() => _invoke('sync', syncPayload(events, settings.value, today()));
+  /// Pushes now and after every change to [events], [settings] or [counters].
+  static void attach(EventStore events, SettingsStore settings, CounterStore counters) {
+    void push() => _invoke('sync', syncPayload(events, settings.value, today(), counters: counters));
     push();
     events.addListener(push);
     settings.addListener(push);
+    counters.addListener(push);
   }
 
   /// Calls [onShowDate] with the date a widget or notification tap opened the app on, now (cold start) and later.
@@ -51,7 +53,12 @@ class WidgetBridge {
   }
 
   @visibleForTesting
-  static Map<String, String> syncPayload(EventStore events, Settings settings, DateTime today) => {
+  static Map<String, String> syncPayload(
+    EventStore events,
+    Settings settings,
+    DateTime today, {
+    CounterStore? counters,
+  }) => {
     'occurrences': jsonEncode(occurrencesJson(events, today)),
     'settings': jsonEncode({
       'weekStartsMonday': settings.weekStartsMonday,
@@ -61,7 +68,39 @@ class WidgetBridge {
       'lunarReminders': settings.lunarReminders,
     }),
     'countdown': jsonEncode(countdownJson(events, settings, today)),
+    'counter': jsonEncode(counterJson(counters?.counters ?? const [], settings)),
+    'milestones': jsonEncode(milestonesJson(counters?.counters ?? const [], today)),
   };
+
+  /// The counter on the "Đếm ngày" widget: the pinned one, else the first; `{}` when there is none.
+  @visibleForTesting
+  static Map<String, Object> counterJson(List<DayCounter> counters, Settings settings) {
+    final c = counters.where((c) => c.id == settings.counterWidgetId).firstOrNull ?? counters.firstOrNull;
+    if (c == null) return {};
+    return {
+      'title': c.title,
+      'emoji': c.emoji,
+      'date': _iso(c.date),
+      'firstDayIsOne': c.firstDayIsOne,
+      'color': eventColors[c.color.clamp(0, eventColors.length - 1)].toARGB32(),
+    };
+  }
+
+  /// Milestone notifications for the next year: `{"t": text, "d": "yyyy-MM-dd"}`. Shown on the day, at the reminder
+  /// time.
+  @visibleForTesting
+  static List<Map<String, String>> milestonesJson(List<DayCounter> counters, DateTime today) {
+    final until = DateTime(today.year + 1, today.month, today.day);
+    return [
+      for (final c in counters)
+        if (c.notify && c.isFuture(today))
+          if (!c.date.isAfter(until)) {'t': '${c.emoji} ${c.title}: hôm nay là ngày đó!', 'd': _iso(c.date)},
+      for (final c in counters)
+        if (c.notify && !c.isFuture(today))
+          for (final m in c.upcomingMilestones(today, limit: 8))
+            if (!m.date.isAfter(until)) {'t': '${c.emoji} ${c.title}: ${m.label}', 'd': _iso(m.date)},
+    ];
+  }
 
   /// Occurrences from the first day of last month to a year after [today], soonest first, as
   /// `{"t": title, "d": "yyyy-MM-dd", "c": ARGB colour, "r": days before to remind or -1}`.

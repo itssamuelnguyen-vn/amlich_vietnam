@@ -27,18 +27,46 @@ data class SyncSettings(
 
 data class Countdown(val title: String, val dates: List<LocalDate>)
 
+/** The day counter on the "Đếm ngày" widget (see WidgetBridge.counterJson). */
+data class CounterInfo(val title: String, val emoji: String, val date: LocalDate, val firstDayIsOne: Boolean, val color: Int)
+
+/** A counter milestone to notify about on [date]. */
+data class MilestoneInfo(val text: String, val date: LocalDate)
+
 /** What Flutter last pushed, kept in SharedPreferences so widgets and alarms work while the app is closed. */
 object WidgetData {
     private const val PREFS = "amlich_widget"
 
     private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
-    fun save(context: Context, occurrences: String, settings: String, countdown: String) {
-        prefs(context).edit()
-            .putString("occurrences", occurrences)
-            .putString("settings", settings)
-            .putString("countdown", countdown)
-            .apply()
+    fun save(context: Context, values: Map<String, String>) {
+        val editor = prefs(context).edit()
+        for ((key, value) in values) editor.putString(key, value)
+        editor.apply()
+    }
+
+    fun counter(context: Context): CounterInfo? = try {
+        val o = JSONObject(prefs(context).getString("counter", null) ?: "{}")
+        if (!o.has("title")) {
+            null
+        } else {
+            CounterInfo(
+                o.getString("title"), o.getString("emoji"), LocalDate.parse(o.getString("date")),
+                o.optBoolean("firstDayIsOne", true), o.optInt("color", 0xFFE53935.toInt()),
+            )
+        }
+    } catch (e: Exception) {
+        null
+    }
+
+    fun milestones(context: Context): List<MilestoneInfo> = try {
+        val array = JSONArray(prefs(context).getString("milestones", null) ?: "[]")
+        (0 until array.length()).map {
+            val o = array.getJSONObject(it)
+            MilestoneInfo(o.getString("t"), LocalDate.parse(o.getString("d")))
+        }
+    } catch (e: Exception) {
+        emptyList()
     }
 
     /** Occurrences from the start of last month to a year ahead, sorted by date. */
@@ -92,6 +120,7 @@ object Widgets {
         TodayWidgetProvider.update(context, manager, ids(context, manager, TodayWidgetProvider::class.java))
         MonthWidgetProvider.update(context, manager, ids(context, manager, MonthWidgetProvider::class.java))
         CountdownWidgetProvider.update(context, manager, ids(context, manager, CountdownWidgetProvider::class.java))
+        CounterWidgetProvider.update(context, manager, ids(context, manager, CounterWidgetProvider::class.java))
         scheduleMidnight(context)
         Reminders.reschedule(context)
     }
@@ -101,8 +130,10 @@ object Widgets {
 
     private fun hasWidgets(context: Context): Boolean {
         val manager = AppWidgetManager.getInstance(context)
-        return listOf(TodayWidgetProvider::class.java, MonthWidgetProvider::class.java, CountdownWidgetProvider::class.java)
-            .any { ids(context, manager, it).isNotEmpty() }
+        return listOf(
+            TodayWidgetProvider::class.java, MonthWidgetProvider::class.java,
+            CountdownWidgetProvider::class.java, CounterWidgetProvider::class.java,
+        ).any { ids(context, manager, it).isNotEmpty() }
     }
 
     /**

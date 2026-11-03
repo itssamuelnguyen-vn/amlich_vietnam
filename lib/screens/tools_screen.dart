@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../counters/counter_screens.dart';
 import '../lunar/format.dart';
 import '../lunar/lunar_calendar.dart';
 import '../theme.dart';
@@ -30,6 +31,8 @@ class ToolsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
         children: [
+          const CountersCard(),
+          const SizedBox(height: 16),
           GoodDaysCard(onShowDate: onShowDate),
           const SizedBox(height: 16),
           const AgeLookupCard(),

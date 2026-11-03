@@ -34,3 +34,19 @@ class RemindersTest {
         assertEquals(LocalDate.of(2026, 11, 23), list[1].date)
     }
 }
+
+class MilestoneRemindersTest {
+    @Test
+    fun milestonesComeOnTheDayAtTheReminderTime() {
+        val now = LocalDateTime.of(2026, 11, 3, 9, 0)
+        val list = Reminders.upcoming(
+            emptyList(), SyncSettings(reminderHour = 8), now,
+            listOf(
+                MilestoneInfo("❤️ Bên nhau: 1000 ngày", LocalDate.of(2026, 11, 9)),
+                MilestoneInfo("Đã qua", LocalDate.of(2026, 11, 3)), // 08:00 today is past
+            ),
+        )
+        assertEquals(listOf("❤️ Bên nhau: 1000 ngày"), list.map { it.title })
+        assertEquals(LocalDateTime.of(2026, 11, 9, 8, 0), list[0].at)
+    }
+}

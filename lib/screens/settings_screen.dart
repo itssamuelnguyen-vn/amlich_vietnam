@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../counters/counter.dart';
 import '../data/backup.dart';
 import '../data/people.dart';
 import '../data/settings.dart';
@@ -165,6 +166,7 @@ class _BackupCard extends StatelessWidget {
   Future<void> _export(BuildContext context) async {
     final events = EventScope.of(context).events;
     final people = PeopleScope.of(context).people;
+    final counters = CounterScope.of(context).counters;
     final settings = SettingsScope.of(context).value;
     final messenger = ScaffoldMessenger.of(context);
     final now = DateTime.now();
@@ -172,7 +174,7 @@ class _BackupCard extends StatelessWidget {
     try {
       final saved = await FilePicker.saveText(
         name,
-        Backup.encode(BackupData(events: events, people: people, settings: settings)),
+        Backup.encode(BackupData(events: events, people: people, counters: counters, settings: settings)),
       );
       if (saved) messenger.showSnackBar(SnackBar(content: Text('Đã sao lưu ${events.length} sự kiện vào $name')));
     } on PlatformException catch (e) {
@@ -183,6 +185,7 @@ class _BackupCard extends StatelessWidget {
   Future<void> _import(BuildContext context) async {
     final events = EventScope.of(context);
     final people = PeopleScope.of(context);
+    final counters = CounterScope.of(context);
     final settings = SettingsScope.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final BackupData data;
@@ -203,7 +206,8 @@ class _BackupCard extends StatelessWidget {
       builder: (context) => AlertDialog(
         title: const Text('Khôi phục dữ liệu'),
         content: Text(
-          'File có ${data.events.length} sự kiện và ${data.people.length} người trong mục tuổi cả nhà.\n\n'
+          'File có ${data.events.length} sự kiện, ${data.counters.length} bộ đếm ngày và ${data.people.length} người '
+          'trong mục tuổi cả nhà.\n\n'
           '• Thêm vào: giữ dữ liệu hiện có, bỏ qua mục trùng.\n'
           '• Thay thế: xoá dữ liệu hiện có, khôi phục cả cài đặt.',
         ),
@@ -218,11 +222,13 @@ class _BackupCard extends StatelessWidget {
     final replace = mode == _ImportMode.replace;
     final added = await events.import(data.events, replace: replace, key: Backup.eventKey);
     await people.import(data.people, replace: replace);
+    await counters.import(data.counters, replace: replace);
     // Event and calendar ids are specific to this phone, so the countdown target and the synced calendar are not restored.
     if (replace && data.settings != null) {
       await settings.update(
         data.settings!.copyWith(
           countdownEventId: () => null,
+          counterWidgetId: () => null,
           googleCalendarId: () => settings.value.googleCalendarId,
           googleCalendarName: settings.value.googleCalendarName,
         ),

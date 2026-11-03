@@ -16,7 +16,7 @@ import java.time.ZoneId
 data class Reminder(val at: LocalDateTime, val title: String, val text: String, val date: LocalDate)
 
 /**
- * Event and mùng 1 / rằm reminders, scheduled natively so they fire without the app running.
+ * Event, mùng 1 / rằm and day-counter milestone reminders, scheduled natively so they fire without the app running.
  *
  * Only the next [MAX] are scheduled; each one that fires schedules the following ones, and so do app syncs, the
  * midnight refresh and boot. Alarms are inexact (setAndAllowWhileIdle): no exact-alarm permission is needed and a few
@@ -29,8 +29,17 @@ object Reminders {
     private const val MAX = 12
 
     /** Upcoming reminders after [now], soonest first (pure, for tests). */
-    fun upcoming(occurrences: List<Occurrence>, settings: SyncSettings, now: LocalDateTime): List<Reminder> {
+    fun upcoming(
+        occurrences: List<Occurrence>,
+        settings: SyncSettings,
+        now: LocalDateTime,
+        milestones: List<MilestoneInfo> = emptyList(),
+    ): List<Reminder> {
         val list = mutableListOf<Reminder>()
+        for (m in milestones) {
+            val at = m.date.atTime(settings.reminderHour, settings.reminderMinute)
+            if (at.isAfter(now)) list += Reminder(at, m.text, formatDate(m.date), m.date)
+        }
         for (o in occurrences) {
             if (o.remindDays < 0) continue
             val at = o.date.minusDays(o.remindDays.toLong()).atTime(settings.reminderHour, settings.reminderMinute)
@@ -81,7 +90,9 @@ object Reminders {
     fun reschedule(context: Context) {
         val alarms = context.getSystemService(AlarmManager::class.java)
         for (i in 0 until MAX) alarms.cancel(pending(context, i, null))
-        val reminders = upcoming(WidgetData.occurrences(context), WidgetData.settings(context), LocalDateTime.now())
+        val reminders = upcoming(
+            WidgetData.occurrences(context), WidgetData.settings(context), LocalDateTime.now(), WidgetData.milestones(context),
+        )
         for ((i, r) in reminders.withIndex()) {
             val millis = r.at.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
             alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, millis, pending(context, i, r))

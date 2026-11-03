@@ -18,6 +18,7 @@ installed directly on the phone, not published to Google Play. The app's user in
 | Day almanac: trực, lunar mansion, lucky directions, clashing ages, Tam nương / Nguyệt kỵ | Done |
 | Age lookup (lunar age, zodiac, nạp âm element, harmonies and clashes), family ages, good-day search | Done |
 | Year view (12 months) | Done |
+| Day counters ("together for 1,234 days"): saved milestones with photo, upcoming 100/1000-day marks and anniversaries, notifications and a home-screen widget | Done |
 | Settings: theme, text size, week start, holiday groups; backup and restore to a file | Done |
 | Google Calendar sync: one-way, app → a calendar on the phone (normally Google), no OAuth needed | Done |
 
@@ -42,7 +43,8 @@ installed directly on the phone, not published to Google Play. The app's user in
 - `lib/lunar/almanac.dart`: day-selection rules (trực by solar-term month, the 28 mansions, Hỷ thần / Tài thần,
   clashes and harmonies, nạp âm). These are folk beliefs whose details vary between sources; the rules were checked
   against a published almanac on 13 dates (`test/almanac_test.dart`).
-- `lib/data/`: the SQLite database (`app_database.dart`, version 2), settings, family ages and backup files.
+- `lib/data/`: the SQLite database (`app_database.dart`, version 3), settings, family ages and backup files.
+- `lib/counters/`: day counters (model, store, screens). Photos are copied into the app's files; backups leave them out.
 - Reminders (`Reminders.kt`) are scheduled natively from the occurrences Flutter syncs, so they fire with the app
   closed; they are rescheduled after each one, at midnight, on boot and on every sync.
 - Google Calendar sync (`lib/sync/google_sync.dart`, `GoogleCalendarSync.kt`) writes events into a calendar the user

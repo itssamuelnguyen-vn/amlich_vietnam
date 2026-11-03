@@ -1,3 +1,4 @@
+import 'package:amlich_vietnam/counters/counter.dart';
 import 'package:amlich_vietnam/data/people.dart';
 import 'package:amlich_vietnam/data/settings.dart';
 import 'package:amlich_vietnam/events/event.dart';
@@ -8,11 +9,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// The whole app on in-memory stores.
-Future<AmLichApp> testApp({List<Event> events = const [], List<Person> people = const []}) async {
+Future<AmLichApp> testApp({
+  List<Event> events = const [],
+  List<Person> people = const [],
+  List<DayCounter> counters = const [],
+}) async {
   final eventStore = EventStore(MemoryEventBackend(events));
   final settings = SettingsStore(MemorySettingsBackend());
   final peopleStore = PeopleStore(MemoryPeopleBackend());
-  await Future.wait([eventStore.load(), settings.load(), peopleStore.load()]);
+  final counterStore = CounterStore(MemoryCounterBackend(counters));
+  await Future.wait([eventStore.load(), settings.load(), peopleStore.load(), counterStore.load()]);
   for (final p in people) {
     await peopleStore.add(p);
   }
@@ -20,6 +26,7 @@ Future<AmLichApp> testApp({List<Event> events = const [], List<Person> people = 
     events: eventStore,
     settings: settings,
     people: peopleStore,
+    counters: counterStore,
     googleSync: GoogleSync(eventStore, settings),
   );
 }

@@ -27,6 +27,7 @@ class Settings {
     this.countdownEventId,
     this.googleCalendarId,
     this.googleCalendarName = '',
+    this.counterWidgetId,
   });
 
   final ThemeMode themeMode;
@@ -52,6 +53,9 @@ class Settings {
   /// "Name · account" of [googleCalendarId], for display.
   final String googleCalendarName;
 
+  /// Day counter shown on the "Đếm ngày" widget; null shows the first one.
+  final int? counterWidgetId;
+
   Settings copyWith({
     ThemeMode? themeMode,
     double? textScale,
@@ -63,6 +67,7 @@ class Settings {
     int? Function()? countdownEventId,
     int? Function()? googleCalendarId,
     String? googleCalendarName,
+    int? Function()? counterWidgetId,
   }) => Settings(
     themeMode: themeMode ?? this.themeMode,
     textScale: textScale ?? this.textScale,
@@ -74,6 +79,7 @@ class Settings {
     countdownEventId: countdownEventId != null ? countdownEventId() : this.countdownEventId,
     googleCalendarId: googleCalendarId != null ? googleCalendarId() : this.googleCalendarId,
     googleCalendarName: googleCalendarName ?? this.googleCalendarName,
+    counterWidgetId: counterWidgetId != null ? counterWidgetId() : this.counterWidgetId,
   );
 
   Map<String, String> toMap() => {
@@ -87,6 +93,7 @@ class Settings {
     'countdown_event_id': '${countdownEventId ?? ''}',
     'google_calendar_id': '${googleCalendarId ?? ''}',
     'google_calendar_name': googleCalendarName,
+    'counter_widget_id': '${counterWidgetId ?? ''}',
   };
 
   /// Unknown or missing keys fall back to the defaults, so old backups and new settings both load.
@@ -105,6 +112,7 @@ class Settings {
       countdownEventId: int.tryParse(m['countdown_event_id'] ?? ''),
       googleCalendarId: int.tryParse(m['google_calendar_id'] ?? ''),
       googleCalendarName: m['google_calendar_name'] ?? '',
+      counterWidgetId: int.tryParse(m['counter_widget_id'] ?? ''),
     );
   }
 }

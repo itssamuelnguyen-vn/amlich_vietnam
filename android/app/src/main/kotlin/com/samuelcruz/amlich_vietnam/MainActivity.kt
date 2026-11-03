@@ -22,7 +22,8 @@ import java.util.concurrent.Executors
  *   on (once); `notificationsEnabled` / `requestNotificationPermission` for reminders.
  * - Android → Flutter: `showDate` when a widget tap reaches the already running app.
  *
- * "amlich/files": `saveText` / `openText` through the system document picker (backup and restore).
+ * "amlich/files": `saveText` / `openText` (backup and restore) and `pickImage` (counter photos) through the system
+ * document picker.
  *
  * "amlich/calendar": calendar permission, the phone's writable calendars, and `sync` / `clear` of the app's events in
  * one of them (GoogleCalendarSync).
@@ -44,12 +45,8 @@ class MainActivity : FlutterActivity() {
             setMethodCallHandler { call, result ->
                 when (call.method) {
                     "sync" -> {
-                        WidgetData.save(
-                            this@MainActivity,
-                            call.argument<String>("occurrences") ?: "[]",
-                            call.argument<String>("settings") ?: "{}",
-                            call.argument<String>("countdown") ?: "{}",
-                        )
+                        val keys = listOf("occurrences", "settings", "countdown", "counter", "milestones")
+                        WidgetData.save(this@MainActivity, keys.mapNotNull { k -> call.argument<String>(k)?.let { k to it } }.toMap())
                         Widgets.updateAll(this@MainActivity)
                         result.success(null)
                     }
@@ -124,6 +121,13 @@ class MainActivity : FlutterActivity() {
                         .putExtra(Intent.EXTRA_TITLE, call.argument<String>("name") ?: "amlich.json")
                     startActivityForResult(intent, REQUEST_SAVE)
                 }
+                "pickImage" -> {
+                    pendingFile = result
+                    startActivityForResult(
+                        Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("image/*"),
+                        REQUEST_IMAGE,
+                    )
+                }
                 "openText" -> {
                     pendingFile = result
                     // "*/*": Drive and other providers often label .json files as octet-stream.
@@ -138,7 +142,7 @@ class MainActivity : FlutterActivity() {
     @Deprecated("startActivityForResult is enough for two one-off pickers")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode != REQUEST_SAVE && requestCode != REQUEST_OPEN) return
+        if (requestCode != REQUEST_SAVE && requestCode != REQUEST_OPEN && requestCode != REQUEST_IMAGE) return
         val result = pendingFile ?: return
         pendingFile = null
         val uri = data?.data
@@ -150,6 +154,12 @@ class MainActivity : FlutterActivity() {
             if (requestCode == REQUEST_SAVE) {
                 contentResolver.openOutputStream(uri, "wt")!!.use { it.write(pendingText!!.toByteArray()) }
                 result.success(true)
+            } else if (requestCode == REQUEST_IMAGE) {
+                // Copied into the app's own storage, so the photo survives the original being moved or deleted.
+                val dir = java.io.File(filesDir, "photos").apply { mkdirs() }
+                val file = java.io.File(dir, "counter_${System.currentTimeMillis()}.img")
+                contentResolver.openInputStream(uri)!!.use { input -> file.outputStream().use { input.copyTo(it) } }
+                result.success(file.absolutePath)
             } else {
                 result.success(contentResolver.openInputStream(uri)!!.use { it.readBytes().decodeToString() })
             }
@@ -197,5 +207,6 @@ class MainActivity : FlutterActivity() {
         const val REQUEST_OPEN = 4102
         const val REQUEST_NOTIFICATIONS = 4103
         const val REQUEST_CALENDAR = 4104
+        const val REQUEST_IMAGE = 4105
     }
 }
