@@ -10,6 +10,7 @@ import 'notes/day_notes.dart';
 import 'screens/home_screen.dart';
 import 'sync/google_sync.dart';
 import 'theme.dart';
+import 'weather/weather.dart';
 import 'widget/widget_bridge.dart';
 
 Future<void> main() async {
@@ -31,6 +32,7 @@ Future<void> main() async {
       counters: counters,
       notes: notes,
       googleSync: googleSync,
+      weather: WeatherService(),
     ),
   );
 }
@@ -43,6 +45,7 @@ class AmLichApp extends StatelessWidget {
     required this.people,
     required this.counters,
     required this.notes,
+    required this.weather,
     required this.googleSync,
   });
 
@@ -51,6 +54,7 @@ class AmLichApp extends StatelessWidget {
   final PeopleStore people;
   final CounterStore counters;
   final NotesStore notes;
+  final WeatherService weather;
   final GoogleSync googleSync;
 
   @override
@@ -81,6 +85,7 @@ class AmLichApp extends StatelessWidget {
     app = SettingsScope(store: settings, child: app);
     app = CounterScope(store: counters, child: app);
     app = NotesScope(store: notes, child: app);
+    app = WeatherScope(service: weather, child: app);
     app = PeopleScope(store: people, child: app);
     return EventScope(store: events, child: app);
   }

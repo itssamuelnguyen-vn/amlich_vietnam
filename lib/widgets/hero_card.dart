@@ -8,6 +8,7 @@ import '../lunar/holidays.dart';
 import '../lunar/lunar_calendar.dart';
 import '../lunar/proverbs.dart';
 import '../theme.dart';
+import '../weather/weather.dart';
 import 'moon_phase.dart';
 
 /// The big calendar page ("tờ lịch") of the selected day, like a page of a Vietnamese tear-off calendar.
@@ -268,6 +269,13 @@ class _HeroContent extends StatelessWidget {
                     background: star.isGood ? lich.gold : Colors.black.withValues(alpha: 0.28),
                     foreground: star.isGood ? lich.heroBottom : onHero,
                   ),
+                  if (WeatherScope.of(context).on(date) case final w?)
+                    _Pill(
+                      icon: Icons.thermostat_rounded,
+                      text: '${w.emoji} ${w.description} ${w.range}',
+                      background: Colors.black.withValues(alpha: 0.22),
+                      foreground: onHero,
+                    ),
                   for (final h in holidays)
                     _Pill(icon: Icons.celebration, text: h, background: onHero, foreground: lich.heroTop),
                 ],

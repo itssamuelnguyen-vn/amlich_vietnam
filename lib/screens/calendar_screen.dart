@@ -13,6 +13,7 @@ import '../widgets/almanac_card.dart';
 import '../widgets/day_sections.dart';
 import '../widgets/hero_card.dart';
 import '../widgets/month_calendar.dart';
+import '../weather/weather_card.dart';
 import '../widgets/pickers.dart';
 import 'year_screen.dart';
 
@@ -196,6 +197,8 @@ class CalendarScreenState extends State<CalendarScreen> {
                   DayNotesCard(date: _selected),
                   const SizedBox(height: 16),
                   AlmanacCard(date: _selected),
+                  const SizedBox(height: 16),
+                  WeatherCard(selected: _selected, onTap: _select),
                   const SizedBox(height: 16),
                   SunMoonCard(date: _selected),
                   const SizedBox(height: 16),

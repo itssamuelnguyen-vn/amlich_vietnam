@@ -1,5 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Event reminders (asked for at runtime on Android 13+), rescheduled after a reboot. -->
+    <!-- Weather forecast (Open-Meteo); everything else works offline. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- Optional mirroring of events into the phone's Google calendar (CalendarContract). -->

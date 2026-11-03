@@ -6,6 +6,10 @@ import 'package:amlich_vietnam/events/event_store.dart';
 import 'package:amlich_vietnam/main.dart';
 import 'package:amlich_vietnam/notes/day_notes.dart';
 import 'package:amlich_vietnam/sync/google_sync.dart';
+import 'package:amlich_vietnam/weather/weather.dart';
+
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -30,6 +34,8 @@ Future<AmLichApp> testApp({
     people: peopleStore,
     counters: counterStore,
     notes: notes,
+    // No network in tests: the weather card shows its retry state.
+    weather: WeatherService(fetch: (_) async => throw const SocketException('offline')),
     googleSync: GoogleSync(eventStore, settings),
   );
 }
