@@ -4,6 +4,7 @@ import 'package:amlich_vietnam/data/settings.dart';
 import 'package:amlich_vietnam/events/event.dart';
 import 'package:amlich_vietnam/events/event_store.dart';
 import 'package:amlich_vietnam/main.dart';
+import 'package:amlich_vietnam/notes/day_notes.dart';
 import 'package:amlich_vietnam/sync/google_sync.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -18,7 +19,8 @@ Future<AmLichApp> testApp({
   final settings = SettingsStore(MemorySettingsBackend());
   final peopleStore = PeopleStore(MemoryPeopleBackend());
   final counterStore = CounterStore(MemoryCounterBackend(counters));
-  await Future.wait([eventStore.load(), settings.load(), peopleStore.load(), counterStore.load()]);
+  final notes = NotesStore(MemoryNotesBackend());
+  await Future.wait([eventStore.load(), settings.load(), peopleStore.load(), counterStore.load(), notes.load()]);
   for (final p in people) {
     await peopleStore.add(p);
   }
@@ -27,6 +29,7 @@ Future<AmLichApp> testApp({
     settings: settings,
     people: peopleStore,
     counters: counterStore,
+    notes: notes,
     googleSync: GoogleSync(eventStore, settings),
   );
 }

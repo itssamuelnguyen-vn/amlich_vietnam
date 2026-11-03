@@ -4,21 +4,31 @@ import 'package:flutter/services.dart';
 
 import '../counters/counter.dart';
 import '../events/event.dart';
+import '../notes/day_notes.dart';
 import 'people.dart';
 import 'settings.dart';
 
 /// Contents of a backup file.
 class BackupData {
-  const BackupData({required this.events, required this.people, this.counters = const [], this.settings});
+  const BackupData({
+    required this.events,
+    required this.people,
+    this.counters = const [],
+    this.notes = const {},
+    this.todos = const [],
+    this.settings,
+  });
 
   final List<Event> events;
   final List<Person> people;
   final List<DayCounter> counters;
+  final Map<String, String> notes;
+  final List<Todo> todos;
   final Settings? settings;
 }
 
 /// Backup files are JSON: `{"app": "amlich_vietnam", "version": 1, "events": [...], "people": [...],
-/// "counters": [...], "settings": {...}}`.
+/// "counters": [...], "notes": {...}, "todos": [...], "settings": {...}}`.
 class Backup {
   Backup._();
 
@@ -37,6 +47,8 @@ class Backup {
           ..remove('id')
           ..remove('photo'),
     ],
+    'notes': data.notes,
+    'todos': [for (final t in data.todos) t.toMap()..remove('id')],
     'settings': ?data.settings?.toMap(),
   });
 
@@ -58,6 +70,8 @@ class Backup {
         counters: [
           for (final m in json['counters'] as List? ?? []) DayCounter.fromMap(Map<String, Object?>.from(m as Map)),
         ],
+        notes: {for (final e in (json['notes'] as Map? ?? {}).entries) '${e.key}': '${e.value}'},
+        todos: [for (final m in json['todos'] as List? ?? []) Todo.fromMap(Map<String, Object?>.from(m as Map))],
         settings: json['settings'] is Map
             ? Settings.fromMap({for (final e in (json['settings'] as Map).entries) '${e.key}': '${e.value}'})
             : null,

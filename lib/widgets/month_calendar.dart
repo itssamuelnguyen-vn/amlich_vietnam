@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/settings.dart';
 import '../events/event_store.dart';
 import '../lunar/format.dart';
+import '../notes/day_notes.dart';
 import '../lunar/holidays.dart';
 import '../lunar/lunar_calendar.dart';
 import '../theme.dart';
@@ -161,6 +162,7 @@ class _Legend extends StatelessWidget {
         item(context.lich.goodDay, 'Ngày hoàng đạo'),
         item(context.lich.holiday, 'Ngày lễ'),
         item(Theme.of(context).colorScheme.primary.withValues(alpha: 0.6), 'Sự kiện'),
+        item(Theme.of(context).colorScheme.outline, 'Ghi chú'),
       ],
     );
   }
@@ -227,6 +229,7 @@ class _DayCell extends StatelessWidget {
     final dots = [
       if (holiday) isSelected ? lich.gold : lich.holiday,
       for (final e in EventScope.of(context).on(date, lunar)) e.colorValue,
+      if (NotesScope.of(context).hasContent(date)) scheme.outline,
     ];
     final special = lunar.day == 1 || lunar.day == 15;
 

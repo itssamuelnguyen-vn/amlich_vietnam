@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../data/settings.dart';
 import '../lunar/format.dart';
+import '../notes/day_notes_card.dart';
 import '../lunar/holidays.dart';
 import '../lunar/lunar_calendar.dart';
 import '../share/share_image.dart';
@@ -190,6 +191,8 @@ class CalendarScreenState extends State<CalendarScreen> {
                   ),
                   const SizedBox(height: 16),
                   DayEventsCard(date: _selected),
+                  const SizedBox(height: 16),
+                  DayNotesCard(date: _selected),
                   const SizedBox(height: 16),
                   AlmanacCard(date: _selected),
                   const SizedBox(height: 16),

@@ -6,6 +6,7 @@ import 'data/app_database.dart';
 import 'data/people.dart';
 import 'data/settings.dart';
 import 'events/event_store.dart';
+import 'notes/day_notes.dart';
 import 'screens/home_screen.dart';
 import 'sync/google_sync.dart';
 import 'theme.dart';
@@ -18,10 +19,20 @@ Future<void> main() async {
   final settings = SettingsStore(SqliteSettingsBackend());
   final people = PeopleStore(SqlitePeopleBackend());
   final counters = CounterStore(SqliteCounterBackend());
-  await Future.wait([events.load(), settings.load(), people.load(), counters.load()]);
+  final notes = NotesStore(SqliteNotesBackend());
+  await Future.wait([events.load(), settings.load(), people.load(), counters.load(), notes.load()]);
   WidgetBridge.attach(events, settings, counters);
   final googleSync = GoogleSync(events, settings)..attach();
-  runApp(AmLichApp(events: events, settings: settings, people: people, counters: counters, googleSync: googleSync));
+  runApp(
+    AmLichApp(
+      events: events,
+      settings: settings,
+      people: people,
+      counters: counters,
+      notes: notes,
+      googleSync: googleSync,
+    ),
+  );
 }
 
 class AmLichApp extends StatelessWidget {
@@ -31,6 +42,7 @@ class AmLichApp extends StatelessWidget {
     required this.settings,
     required this.people,
     required this.counters,
+    required this.notes,
     required this.googleSync,
   });
 
@@ -38,6 +50,7 @@ class AmLichApp extends StatelessWidget {
   final SettingsStore settings;
   final PeopleStore people;
   final CounterStore counters;
+  final NotesStore notes;
   final GoogleSync googleSync;
 
   @override
@@ -67,6 +80,7 @@ class AmLichApp extends StatelessWidget {
     app = GoogleSyncScope(sync: googleSync, child: app);
     app = SettingsScope(store: settings, child: app);
     app = CounterScope(store: counters, child: app);
+    app = NotesScope(store: notes, child: app);
     app = PeopleScope(store: people, child: app);
     return EventScope(store: events, child: app);
   }

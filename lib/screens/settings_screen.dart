@@ -6,6 +6,7 @@ import '../data/backup.dart';
 import '../data/people.dart';
 import '../data/settings.dart';
 import '../events/event_store.dart';
+import '../notes/day_notes.dart';
 import '../lunar/format.dart';
 import '../sync/google_sync.dart';
 import '../widget/widget_bridge.dart';
@@ -167,6 +168,7 @@ class _BackupCard extends StatelessWidget {
     final events = EventScope.of(context).events;
     final people = PeopleScope.of(context).people;
     final counters = CounterScope.of(context).counters;
+    final notes = NotesScope.of(context);
     final settings = SettingsScope.of(context).value;
     final messenger = ScaffoldMessenger.of(context);
     final now = DateTime.now();
@@ -174,7 +176,16 @@ class _BackupCard extends StatelessWidget {
     try {
       final saved = await FilePicker.saveText(
         name,
-        Backup.encode(BackupData(events: events, people: people, counters: counters, settings: settings)),
+        Backup.encode(
+          BackupData(
+            events: events,
+            people: people,
+            counters: counters,
+            notes: notes.notes,
+            todos: notes.todos,
+            settings: settings,
+          ),
+        ),
       );
       if (saved) messenger.showSnackBar(SnackBar(content: Text('Đã sao lưu ${events.length} sự kiện vào $name')));
     } on PlatformException catch (e) {
@@ -186,6 +197,7 @@ class _BackupCard extends StatelessWidget {
     final events = EventScope.of(context);
     final people = PeopleScope.of(context);
     final counters = CounterScope.of(context);
+    final notes = NotesScope.of(context);
     final settings = SettingsScope.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final BackupData data;
@@ -223,6 +235,7 @@ class _BackupCard extends StatelessWidget {
     final added = await events.import(data.events, replace: replace, key: Backup.eventKey);
     await people.import(data.people, replace: replace);
     await counters.import(data.counters, replace: replace);
+    await notes.import(data.notes, data.todos, replace: replace);
     // Event and calendar ids are specific to this phone, so the countdown target and the synced calendar are not restored.
     if (replace && data.settings != null) {
       await settings.update(

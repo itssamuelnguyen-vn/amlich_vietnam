@@ -63,7 +63,7 @@ void main() {
       expect(find.text('HÔM NAY'), findsOneWidget);
 
       // Scroll down to the lower cards.
-      await tester.drag(find.byType(CustomScrollView), const Offset(0, -2500));
+      await tester.dragUntilVisible(find.text('Ngày lễ sắp tới'), find.byType(CustomScrollView), const Offset(0, -400));
       await tester.pumpAndSettle();
       expect(find.text('Ngày lễ sắp tới'), findsOneWidget);
 
@@ -74,7 +74,7 @@ void main() {
       await tester.tap(find.text('Xem trên lịch'));
       await tester.pumpAndSettle();
 
-      await tester.drag(find.byType(CustomScrollView), const Offset(0, 3000));
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, 20000));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Tháng ${now.month}, ${now.year}'));
       await tester.pumpAndSettle();

@@ -5,6 +5,7 @@ import 'package:sqflite/sqflite.dart';
 ///
 /// Version 1: events. Version 2: events.remind_days, settings (key/value) and people (family ages).
 /// Version 3: counters (day counters). Version 4: people birthdays (birth_day, birth_month, birth_lunar, event_id).
+/// Version 5: day notes and to-dos.
 class AppDatabase {
   AppDatabase._();
 
@@ -12,12 +13,13 @@ class AppDatabase {
 
   static Future<Database> get instance => _db ??= openDatabase(
     p.join(_path ?? '', 'amlich.db'),
-    version: 4,
+    version: 5,
     onCreate: (db, version) async {
       await db.execute(_events);
       await _createV2(db);
       await db.execute(_counters);
       await _addBirthdays(db);
+      await _createNotes(db);
     },
     onUpgrade: (db, from, to) async {
       if (from < 2) {
@@ -26,6 +28,7 @@ class AppDatabase {
       }
       if (from < 3) await db.execute(_counters);
       if (from < 4) await _addBirthdays(db);
+      if (from < 5) await _createNotes(db);
     },
   );
 
@@ -60,6 +63,14 @@ class AppDatabase {
       notify INTEGER NOT NULL DEFAULT 1,
       photo TEXT NOT NULL DEFAULT ''
     )''';
+
+  static Future<void> _createNotes(Database db) async {
+    await db.execute('CREATE TABLE notes(date TEXT PRIMARY KEY, text TEXT NOT NULL)');
+    await db.execute(
+      'CREATE TABLE todos(id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT NOT NULL, text TEXT NOT NULL, '
+      'done INTEGER NOT NULL DEFAULT 0)',
+    );
+  }
 
   static Future<void> _addBirthdays(Database db) async {
     for (final column in ['birth_day', 'birth_month', 'event_id']) {
