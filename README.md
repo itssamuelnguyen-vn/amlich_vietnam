@@ -19,7 +19,7 @@ installed directly on the phone, not published to Google Play. The app's user in
 | Age lookup (lunar age, zodiac, nạp âm element, harmonies and clashes), family ages, good-day search | Done |
 | Year view (12 months) | Done |
 | Settings: theme, text size, week start, holiday groups; backup and restore to a file | Done |
-| Google Calendar sync (through the Google account on the phone) | Planned |
+| Google Calendar sync: one-way, app → a calendar on the phone (normally Google), no OAuth needed | Done |
 
 ## Project layout
 
@@ -45,6 +45,10 @@ installed directly on the phone, not published to Google Play. The app's user in
 - `lib/data/`: the SQLite database (`app_database.dart`, version 2), settings, family ages and backup files.
 - Reminders (`Reminders.kt`) are scheduled natively from the occurrences Flutter syncs, so they fire with the app
   closed; they are rescheduled after each one, at midnight, on boot and on every sync.
+- Google Calendar sync (`lib/sync/google_sync.dart`, `GoogleCalendarSync.kt`) writes events into a calendar the user
+  picks through Android's CalendarContract, so the phone's Google account uploads them; no OAuth or Cloud project.
+  Lunar recurrences cannot be calendar repeat rules, so each occurrence in the next two years is an all-day event.
+  Rows are tracked by key and content hash, so a sync only touches what changed; past occurrences stay as history.
 - `test/`: run `flutter test`. Checks known Tết dates (including years where Vietnam and China differ, such as 1985 and
   2007), leap months, and a round trip of every day from 1900 to 2100.
 - `android/app/src/test/`: JVM test checking the Kotlin port against values printed by the Dart code. Run it with

@@ -25,6 +25,8 @@ class Settings {
     this.reminderMinute = 0,
     this.lunarReminders = false,
     this.countdownEventId,
+    this.googleCalendarId,
+    this.googleCalendarName = '',
   });
 
   final ThemeMode themeMode;
@@ -44,6 +46,12 @@ class Settings {
   /// Event the countdown widget counts down to; null means the next Tết.
   final int? countdownEventId;
 
+  /// Phone calendar (usually a Google one) the events are mirrored into; null when syncing is off.
+  final int? googleCalendarId;
+
+  /// "Name · account" of [googleCalendarId], for display.
+  final String googleCalendarName;
+
   Settings copyWith({
     ThemeMode? themeMode,
     double? textScale,
@@ -53,6 +61,8 @@ class Settings {
     int? reminderMinute,
     bool? lunarReminders,
     int? Function()? countdownEventId,
+    int? Function()? googleCalendarId,
+    String? googleCalendarName,
   }) => Settings(
     themeMode: themeMode ?? this.themeMode,
     textScale: textScale ?? this.textScale,
@@ -62,6 +72,8 @@ class Settings {
     reminderMinute: reminderMinute ?? this.reminderMinute,
     lunarReminders: lunarReminders ?? this.lunarReminders,
     countdownEventId: countdownEventId != null ? countdownEventId() : this.countdownEventId,
+    googleCalendarId: googleCalendarId != null ? googleCalendarId() : this.googleCalendarId,
+    googleCalendarName: googleCalendarName ?? this.googleCalendarName,
   );
 
   Map<String, String> toMap() => {
@@ -73,6 +85,8 @@ class Settings {
     'reminder_minute': '$reminderMinute',
     'lunar_reminders': '$lunarReminders',
     'countdown_event_id': '${countdownEventId ?? ''}',
+    'google_calendar_id': '${googleCalendarId ?? ''}',
+    'google_calendar_name': googleCalendarName,
   };
 
   /// Unknown or missing keys fall back to the defaults, so old backups and new settings both load.
@@ -89,6 +103,8 @@ class Settings {
       reminderMinute: int.tryParse(m['reminder_minute'] ?? '') ?? d.reminderMinute,
       lunarReminders: m['lunar_reminders'] == 'true',
       countdownEventId: int.tryParse(m['countdown_event_id'] ?? ''),
+      googleCalendarId: int.tryParse(m['google_calendar_id'] ?? ''),
+      googleCalendarName: m['google_calendar_name'] ?? '',
     );
   }
 }

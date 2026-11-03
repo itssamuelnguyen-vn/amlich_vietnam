@@ -283,7 +283,9 @@ class _EventEditorState extends State<EventEditor> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Sự kiện được lưu trên máy. Đồng bộ Google Calendar sẽ có ở bản sau.',
+                    SettingsScope.of(context).value.googleCalendarId == null
+                        ? 'Sự kiện được lưu trên máy. Bật đồng bộ Google Calendar trong Cài đặt để xem trên các thiết bị khác.'
+                        : 'Sự kiện được lưu trên máy và tự đồng bộ sang ${SettingsScope.of(context).value.googleCalendarName}.',
                     style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant),
                   ),
                 ),

@@ -2,6 +2,9 @@
     <!-- Event reminders (asked for at runtime on Android 13+), rescheduled after a reboot. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Optional mirroring of events into the phone's Google calendar (CalendarContract). -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
     <application
         android:label="Âm lịch"
         android:name="${applicationName}"

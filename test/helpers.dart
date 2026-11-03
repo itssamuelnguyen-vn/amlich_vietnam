@@ -3,6 +3,7 @@ import 'package:amlich_vietnam/data/settings.dart';
 import 'package:amlich_vietnam/events/event.dart';
 import 'package:amlich_vietnam/events/event_store.dart';
 import 'package:amlich_vietnam/main.dart';
+import 'package:amlich_vietnam/sync/google_sync.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -15,7 +16,12 @@ Future<AmLichApp> testApp({List<Event> events = const [], List<Person> people = 
   for (final p in people) {
     await peopleStore.add(p);
   }
-  return AmLichApp(events: eventStore, settings: settings, people: peopleStore);
+  return AmLichApp(
+    events: eventStore,
+    settings: settings,
+    people: peopleStore,
+    googleSync: GoogleSync(eventStore, settings),
+  );
 }
 
 /// A 360×780 dp phone screen.

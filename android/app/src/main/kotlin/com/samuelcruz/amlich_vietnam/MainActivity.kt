@@ -9,6 +9,9 @@ import android.os.Build
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import org.json.JSONArray
+import java.time.LocalDate
+import java.util.concurrent.Executors
 
 /**
  * Hosts Flutter and two channels.
@@ -20,6 +23,9 @@ import io.flutter.plugin.common.MethodChannel
  * - Android → Flutter: `showDate` when a widget tap reaches the already running app.
  *
  * "amlich/files": `saveText` / `openText` through the system document picker (backup and restore).
+ *
+ * "amlich/calendar": calendar permission, the phone's writable calendars, and `sync` / `clear` of the app's events in
+ * one of them (GoogleCalendarSync).
  */
 class MainActivity : FlutterActivity() {
     private var widgetChannel: MethodChannel? = null
@@ -28,6 +34,7 @@ class MainActivity : FlutterActivity() {
     private var pendingFile: MethodChannel.Result? = null
     private var pendingText: String? = null
     private var pendingPermission: MethodChannel.Result? = null
+    private val executor = Executors.newSingleThreadExecutor()
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -64,6 +71,42 @@ class MainActivity : FlutterActivity() {
                     }
                     else -> result.notImplemented()
                 }
+            }
+        }
+        MethodChannel(messenger, "amlich/calendar").setMethodCallHandler { call, result ->
+            when (call.method) {
+                "requestPermission" -> {
+                    if (hasCalendarPermission()) {
+                        result.success(true)
+                    } else {
+                        pendingPermission = result
+                        requestPermissions(
+                            arrayOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR),
+                            REQUEST_CALENDAR,
+                        )
+                    }
+                }
+                "hasPermission" -> result.success(hasCalendarPermission())
+                "calendars" -> background(result) {
+                    GoogleCalendarSync.calendars(this).map {
+                        mapOf("id" to it.id, "name" to it.name, "account" to it.account, "color" to it.color, "google" to it.isGoogle)
+                    }
+                }
+                "sync" -> {
+                    val calendarId = (call.argument<Number>("calendarId") ?: return@setMethodCallHandler result.error("args", "calendarId", null)).toLong()
+                    val items = JSONArray(call.argument<String>("items") ?: "[]").let { a ->
+                        (0 until a.length()).map {
+                            val o = a.getJSONObject(it)
+                            SyncItem(o.getString("k"), o.getString("t"), LocalDate.parse(o.getString("d")), o.getString("n"))
+                        }
+                    }
+                    background(result) {
+                        val (added, changed, removed) = GoogleCalendarSync.sync(this, calendarId, items)
+                        mapOf("added" to added, "changed" to changed, "removed" to removed)
+                    }
+                }
+                "clear" -> background(result) { GoogleCalendarSync.clear(this) }
+                else -> result.notImplemented()
             }
         }
         MethodChannel(messenger, "amlich/files").setMethodCallHandler { call, result ->
@@ -119,9 +162,25 @@ class MainActivity : FlutterActivity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode != REQUEST_NOTIFICATIONS) return
-        pendingPermission?.success(grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED)
+        if (requestCode != REQUEST_NOTIFICATIONS && requestCode != REQUEST_CALENDAR) return
+        pendingPermission?.success(grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED })
         pendingPermission = null
+    }
+
+    private fun hasCalendarPermission() =
+        checkSelfPermission(Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED &&
+            checkSelfPermission(Manifest.permission.WRITE_CALENDAR) == PackageManager.PERMISSION_GRANTED
+
+    /** Runs calendar work off the UI thread and answers on it. */
+    private fun background(result: MethodChannel.Result, work: () -> Any?) {
+        executor.execute {
+            try {
+                val value = work()
+                runOnUiThread { result.success(value) }
+            } catch (e: Exception) {
+                runOnUiThread { result.error("calendar", e.message, null) }
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -137,5 +196,6 @@ class MainActivity : FlutterActivity() {
         const val REQUEST_SAVE = 4101
         const val REQUEST_OPEN = 4102
         const val REQUEST_NOTIFICATIONS = 4103
+        const val REQUEST_CALENDAR = 4104
     }
 }

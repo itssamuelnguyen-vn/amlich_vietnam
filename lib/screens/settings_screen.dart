@@ -6,6 +6,7 @@ import '../data/people.dart';
 import '../data/settings.dart';
 import '../events/event_store.dart';
 import '../lunar/format.dart';
+import '../sync/google_sync.dart';
 import '../widget/widget_bridge.dart';
 import '../widgets/day_sections.dart';
 
@@ -88,6 +89,8 @@ class SettingsScreen extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 16),
+          const _GoogleSyncCard(),
           const SizedBox(height: 16),
           const _RemindersCard(),
           const SizedBox(height: 16),
@@ -215,8 +218,16 @@ class _BackupCard extends StatelessWidget {
     final replace = mode == _ImportMode.replace;
     final added = await events.import(data.events, replace: replace, key: Backup.eventKey);
     await people.import(data.people, replace: replace);
-    // Event ids change on import, so the countdown target cannot be carried over.
-    if (replace && data.settings != null) await settings.update(data.settings!.copyWith(countdownEventId: () => null));
+    // Event and calendar ids are specific to this phone, so the countdown target and the synced calendar are not restored.
+    if (replace && data.settings != null) {
+      await settings.update(
+        data.settings!.copyWith(
+          countdownEventId: () => null,
+          googleCalendarId: () => settings.value.googleCalendarId,
+          googleCalendarName: settings.value.googleCalendarName,
+        ),
+      );
+    }
     messenger.showSnackBar(SnackBar(content: Text('Đã khôi phục $added sự kiện')));
   }
 
@@ -355,6 +366,152 @@ class _RemindersCardState extends State<_RemindersCard> with WidgetsBindingObser
           ),
         ],
       ),
+    );
+  }
+}
+
+class _GoogleSyncCard extends StatelessWidget {
+  const _GoogleSyncCard();
+
+  /// Asks for the calendar permission, then lets the user pick the calendar to sync into.
+  Future<void> _choose(BuildContext context) async {
+    final sync = GoogleSyncScope.of(context);
+    final settings = SettingsScope.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    if (!await sync.requestPermission()) {
+      messenger.showSnackBar(const SnackBar(content: Text('Cần quyền truy cập lịch để đồng bộ')));
+      return;
+    }
+    final calendars = await sync.calendars();
+    if (!context.mounted) return;
+    if (calendars.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Không thấy lịch nào. Hãy đăng nhập tài khoản Google trên điện thoại trước.')),
+      );
+      return;
+    }
+    final chosen = await showDialog<PhoneCalendar>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Đồng bộ vào lịch nào?'),
+        children: [
+          for (final c in calendars)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, c),
+              child: Row(
+                children: [
+                  CircleAvatar(radius: 7, backgroundColor: Color(c.color | 0xFF000000)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(c.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        Text(
+                          c.isGoogle ? c.account : '${c.account} (chỉ trên máy)',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+    if (chosen == null) return;
+    await settings.update(settings.value.copyWith(googleCalendarId: () => chosen.id, googleCalendarName: chosen.label));
+  }
+
+  Future<void> _disable(BuildContext context) async {
+    final sync = GoogleSyncScope.of(context);
+    final remove = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Tắt đồng bộ?'),
+        content: const Text('Có xoá các sự kiện app đã thêm vào Google Calendar không?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Huỷ')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Giữ lại')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Xoá')),
+        ],
+      ),
+    );
+    if (remove == null) return;
+    await sync.disable(removeEvents: remove);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sync = GoogleSyncScope.of(context);
+    final s = SettingsScope.of(context).value;
+    final scheme = Theme.of(context).colorScheme;
+    final muted = TextStyle(fontSize: 13, color: scheme.onSurfaceVariant);
+    final result = sync.lastResult;
+    final last = sync.lastSync;
+    return SectionCard(
+      icon: Icons.sync_rounded,
+      title: 'Đồng bộ Google Calendar',
+      child: !sync.enabled
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Ghi sự kiện của app vào Google Calendar qua tài khoản Google trên điện thoại, để xem được trên '
+                  'máy tính và các thiết bị khác. Sự kiện lặp theo âm lịch được ghi từng ngày cho ${GoogleSync.horizonYears} '
+                  'năm tới và tự cập nhật khi bạn sửa trong app.',
+                  style: muted,
+                ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: () => _choose(context),
+                  icon: const Icon(Icons.sync_rounded),
+                  label: const Text('Bật đồng bộ'),
+                ),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.event_rounded),
+                  title: Text(s.googleCalendarName.isEmpty ? 'Lịch đã chọn' : s.googleCalendarName),
+                  subtitle: Text(
+                    sync.syncing
+                        ? 'Đang đồng bộ…'
+                        : sync.lastError != null
+                        ? 'Lỗi: ${sync.lastError}'
+                        : last == null
+                        ? 'Chưa đồng bộ'
+                        : 'Đồng bộ lúc ${two(last.hour)}:${two(last.minute)}'
+                              '${result == null ? '' : ' · thêm ${result.added}, sửa ${result.changed}, xoá ${result.removed}'}',
+                    style: TextStyle(color: sync.lastError != null ? scheme.error : null),
+                  ),
+                  trailing: sync.syncing
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                      : IconButton(
+                          tooltip: 'Đồng bộ ngay',
+                          onPressed: sync.syncNow,
+                          icon: const Icon(Icons.refresh_rounded),
+                        ),
+                ),
+                Text('Tự đồng bộ mỗi khi bạn thêm, sửa hoặc xoá sự kiện.', style: muted),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(onPressed: () => _choose(context), child: const Text('Đổi lịch')),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton(onPressed: () => _disable(context), child: const Text('Tắt đồng bộ')),
+                    ),
+                  ],
+                ),
+              ],
+            ),
     );
   }
 }
