@@ -5,6 +5,7 @@ import '../data/settings.dart';
 import '../lunar/format.dart';
 import '../lunar/holidays.dart';
 import '../lunar/lunar_calendar.dart';
+import '../share/share_image.dart';
 import '../theme.dart';
 import '../widgets/almanac_card.dart';
 import '../widgets/day_sections.dart';
@@ -86,6 +87,18 @@ class CalendarScreenState extends State<CalendarScreen> {
     _select(month.year == _today.year && month.month == _today.month ? _today : month);
   }
 
+  final _heroKey = GlobalKey();
+
+  Future<void> _sharePage() async {
+    final d = _selected;
+    final l = solarToLunar(d);
+    await shareBoundary(
+      _heroKey,
+      '${weekdayNames[d.weekday - 1]}, ${two(d.day)}/${two(d.month)}/${d.year} – ngày ${l.day} '
+      '${lunarMonthName(l)} năm ${canChiYear(l.year)}',
+    );
+  }
+
   Future<void> _convert() async {
     final date = await showLunarConverter(context, _selected);
     if (date != null) _select(date);
@@ -157,6 +170,8 @@ class CalendarScreenState extends State<CalendarScreen> {
               sliver: SliverList.list(
                 children: [
                   HeroCard(
+                    captureKey: _heroKey,
+                    onShare: _sharePage,
                     date: _selected,
                     isToday: sameDay(_selected, _today),
                     onPrev: () => _select(DateTime(_selected.year, _selected.month, _selected.day - 1)),

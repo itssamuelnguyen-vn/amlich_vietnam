@@ -8,6 +8,7 @@ import '../data/settings.dart';
 import '../events/event.dart';
 import '../lunar/format.dart';
 import '../lunar/lunar_calendar.dart';
+import '../share/share_image.dart';
 import '../theme.dart';
 import '../widgets/date_inputs.dart';
 import '../widgets/day_sections.dart';
@@ -115,10 +116,19 @@ class _CounterTile extends StatelessWidget {
 
 /// Full-screen view of one counter, love-day-app style: photo or gradient, the big day count, a years/months/days
 /// breakdown and the coming milestones.
-class CounterScreen extends StatelessWidget {
+class CounterScreen extends StatefulWidget {
   const CounterScreen({super.key, required this.counterId});
 
   final int counterId;
+
+  @override
+  State<CounterScreen> createState() => _CounterScreenState();
+}
+
+class _CounterScreenState extends State<CounterScreen> {
+  final _captureKey = GlobalKey();
+
+  int get counterId => widget.counterId;
 
   @override
   Widget build(BuildContext context) {
@@ -156,99 +166,110 @@ class CounterScreen extends StatelessWidget {
             icon: Icon(pinned ? Icons.push_pin_rounded : Icons.push_pin_outlined),
           ),
           IconButton(
+            tooltip: 'Chia sẻ',
+            onPressed: () => shareBoundary(
+              _captureKey,
+              '${counter.emoji} ${counter.title}: ${future ? 'còn' : 'đã'} ${formatCount(days)} ngày',
+            ),
+            icon: const Icon(Icons.ios_share_rounded),
+          ),
+          IconButton(
             tooltip: 'Sửa',
             onPressed: () => openCounterEditor(context, counter: counter),
             icon: const Icon(Icons.edit_outlined),
           ),
         ],
       ),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          if (hasPhoto)
-            Image.file(File(counter.photo), fit: BoxFit.cover, cacheWidth: 1440)
-          else
+      body: RepaintBoundary(
+        key: _captureKey,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (hasPhoto)
+              Image.file(File(counter.photo), fit: BoxFit.cover, cacheWidth: 1440)
+            else
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color.lerp(color, Colors.white, 0.15)!, Color.lerp(color, Colors.black, 0.45)!],
+                  ),
+                ),
+              ),
+            // Darkens photos so the text stays readable.
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color.lerp(color, Colors.white, 0.15)!, Color.lerp(color, Colors.black, 0.45)!],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.35),
+                    Colors.black.withValues(alpha: hasPhoto ? 0.65 : 0.25),
+                  ],
                 ),
               ),
             ),
-          // Darkens photos so the text stays readable.
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black.withValues(alpha: 0.35),
-                  Colors.black.withValues(alpha: hasPhoto ? 0.65 : 0.25),
+            SafeArea(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+                children: [
+                  Center(child: Text(counter.emoji, style: const TextStyle(fontSize: 56))),
+                  const SizedBox(height: 8),
+                  Text(
+                    counter.title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: onPhoto, fontSize: 24, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    future ? 'CÒN' : (counter.firstDayIsOne ? 'NGÀY THỨ' : 'ĐÃ ĐƯỢC'),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: onPhoto.withValues(alpha: 0.85),
+                      letterSpacing: 3,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      formatCount(days),
+                      style: const TextStyle(
+                        fontFamily: 'serif',
+                        fontSize: 96,
+                        height: 1.05,
+                        fontWeight: FontWeight.w700,
+                        color: onPhoto,
+                        shadows: [Shadow(blurRadius: 12, color: Colors.black38)],
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'ngày',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: onPhoto.withValues(alpha: 0.9), fontSize: 20),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    breakdown,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: onPhoto, fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${future ? 'Đến' : 'Từ'} ${weekdayNames[counter.date.weekday - 1]}, '
+                    '${two(counter.date.day)}/${two(counter.date.month)}/${counter.date.year} '
+                    '(${lunar.day}/${lunar.month} âm)',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: onPhoto.withValues(alpha: 0.8), fontSize: 13.5),
+                  ),
+                  if (!future) ...[const SizedBox(height: 28), _Milestones(counter: counter, today: now)],
                 ],
               ),
             ),
-          ),
-          SafeArea(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-              children: [
-                Center(child: Text(counter.emoji, style: const TextStyle(fontSize: 56))),
-                const SizedBox(height: 8),
-                Text(
-                  counter.title,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: onPhoto, fontSize: 24, fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  future ? 'CÒN' : (counter.firstDayIsOne ? 'NGÀY THỨ' : 'ĐÃ ĐƯỢC'),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: onPhoto.withValues(alpha: 0.85),
-                    letterSpacing: 3,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    formatCount(days),
-                    style: const TextStyle(
-                      fontFamily: 'serif',
-                      fontSize: 96,
-                      height: 1.05,
-                      fontWeight: FontWeight.w700,
-                      color: onPhoto,
-                      shadows: [Shadow(blurRadius: 12, color: Colors.black38)],
-                    ),
-                  ),
-                ),
-                Text(
-                  'ngày',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: onPhoto.withValues(alpha: 0.9), fontSize: 20),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  breakdown,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: onPhoto, fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '${future ? 'Đến' : 'Từ'} ${weekdayNames[counter.date.weekday - 1]}, '
-                  '${two(counter.date.day)}/${two(counter.date.month)}/${counter.date.year} '
-                  '(${lunar.day}/${lunar.month} âm)',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: onPhoto.withValues(alpha: 0.8), fontSize: 13.5),
-                ),
-                if (!future) ...[const SizedBox(height: 28), _Milestones(counter: counter, today: now)],
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

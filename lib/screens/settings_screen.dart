@@ -207,7 +207,7 @@ class _BackupCard extends StatelessWidget {
         title: const Text('Khôi phục dữ liệu'),
         content: Text(
           'File có ${data.events.length} sự kiện, ${data.counters.length} bộ đếm ngày và ${data.people.length} người '
-          'trong mục tuổi cả nhà.\n\n'
+          'trong mục Cả nhà.\n\n'
           '• Thêm vào: giữ dữ liệu hiện có, bỏ qua mục trùng.\n'
           '• Thay thế: xoá dữ liệu hiện có, khôi phục cả cài đặt.',
         ),

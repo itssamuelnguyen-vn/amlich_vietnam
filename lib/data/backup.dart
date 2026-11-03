@@ -86,6 +86,10 @@ class FilePicker {
   /// Returns null when the user cancels.
   static Future<String?> openText() => _channel.invokeMethod<String>('openText');
 
+  /// Opens the share sheet with a PNG image (e.g. a calendar page) and a caption.
+  static Future<void> shareImage(Uint8List png, String text) =>
+      _channel.invokeMethod('shareImage', {'bytes': png, 'text': text});
+
   /// Lets the user pick a photo, copies it into the app's storage and returns its path; null when cancelled.
   static Future<String?> pickImage() => _channel.invokeMethod<String>('pickImage');
 }

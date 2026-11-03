@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -23,7 +24,7 @@ import java.util.concurrent.Executors
  * - Android → Flutter: `showDate` when a widget tap reaches the already running app.
  *
  * "amlich/files": `saveText` / `openText` (backup and restore) and `pickImage` (counter photos) through the system
- * document picker.
+ * document picker; `shareImage` opens the share sheet with a PNG.
  *
  * "amlich/calendar": calendar permission, the phone's writable calendars, and `sync` / `clear` of the app's events in
  * one of them (GoogleCalendarSync).
@@ -120,6 +121,25 @@ class MainActivity : FlutterActivity() {
                         .setType("application/json")
                         .putExtra(Intent.EXTRA_TITLE, call.argument<String>("name") ?: "amlich.json")
                     startActivityForResult(intent, REQUEST_SAVE)
+                }
+                "shareImage" -> {
+                    // Not a dialog with a result: answer at once and let the share sheet run on its own.
+                    try {
+                        val dir = java.io.File(cacheDir, "share").apply { mkdirs() }
+                        val file = java.io.File(dir, "amlich.png")
+                        file.writeBytes(call.argument<ByteArray>("bytes") ?: ByteArray(0))
+                        val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+                        val send = Intent(Intent.ACTION_SEND)
+                            .setType("image/png")
+                            .putExtra(Intent.EXTRA_STREAM, uri)
+                            .putExtra(Intent.EXTRA_TEXT, call.argument<String>("text") ?: "")
+                            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        startActivity(Intent.createChooser(send, "Chia sẻ"))
+                        result.success(null)
+                    } catch (e: Exception) {
+                        result.error("share", e.message, null)
+                    }
+                    return@setMethodCallHandler
                 }
                 "pickImage" -> {
                     pendingFile = result

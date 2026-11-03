@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../data/settings.dart';
@@ -11,47 +13,90 @@ import 'moon_phase.dart';
 /// The big calendar page ("tờ lịch") of the selected day, like a page of a Vietnamese tear-off calendar.
 /// Swipe left or right for the next or previous day.
 class HeroCard extends StatelessWidget {
-  const HeroCard({super.key, required this.date, required this.isToday, required this.onPrev, required this.onNext});
+  const HeroCard({
+    super.key,
+    required this.date,
+    required this.isToday,
+    required this.onPrev,
+    required this.onNext,
+    this.captureKey,
+    this.onShare,
+  });
 
   final DateTime date;
   final bool isToday;
   final VoidCallback onPrev;
   final VoidCallback onNext;
 
+  /// Key of the RepaintBoundary around the page, for sharing it as an image (the share button is outside it).
+  final GlobalKey? captureKey;
+  final VoidCallback? onShare;
+
   @override
   Widget build(BuildContext context) {
     final lich = context.lich;
+    final page = Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [lich.heroTop, lich.heroBottom],
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 420),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeIn,
+          // A tear-off calendar: the new page flips down from the top edge while the old one fades away.
+          transitionBuilder: (child, anim) {
+            final incoming = child.key == ValueKey(date);
+            if (!incoming) return FadeTransition(opacity: anim, child: child);
+            return AnimatedBuilder(
+              animation: anim,
+              child: child,
+              builder: (context, child) => Transform(
+                alignment: Alignment.topCenter,
+                transform: Matrix4.identity()
+                  ..setEntry(3, 2, 0.0012)
+                  ..rotateX((1 - anim.value) * -math.pi / 2),
+                child: child,
+              ),
+            );
+          },
+          child: _HeroContent(key: ValueKey(date), date: date, isToday: isToday),
+        ),
+      ),
+    );
     return GestureDetector(
       onHorizontalDragEnd: (d) {
         final v = d.primaryVelocity ?? 0;
         if (v < -150) onNext();
         if (v > 150) onPrev();
       },
-      child: Container(
+      child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(28),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [lich.heroTop, lich.heroBottom],
-          ),
           boxShadow: [
             BoxShadow(color: lich.heroBottom.withValues(alpha: 0.35), blurRadius: 24, offset: const Offset(0, 10)),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            transitionBuilder: (child, anim) => FadeTransition(
-              opacity: anim,
-              child: SlideTransition(
-                position: Tween(begin: const Offset(0, 0.03), end: Offset.zero).animate(anim),
-                child: child,
+        child: Stack(
+          children: [
+            RepaintBoundary(key: captureKey, child: page),
+            if (onShare != null)
+              Positioned(
+                right: 6,
+                bottom: 6,
+                child: IconButton(
+                  tooltip: 'Chia sẻ tờ lịch',
+                  onPressed: onShare,
+                  icon: Icon(Icons.ios_share_rounded, color: lich.onHero.withValues(alpha: 0.85), size: 20),
+                ),
               ),
-            ),
-            child: _HeroContent(key: ValueKey(date), date: date, isToday: isToday),
-          ),
+          ],
         ),
       ),
     );

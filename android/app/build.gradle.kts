@@ -49,6 +49,8 @@ flutter {
 }
 
 dependencies {
+    // FileProvider, to share images with other apps.
+    implementation("androidx.core:core:1.13.1")
     // JVM unit tests for the widgets' Kotlin lunar calendar: android\gradlew.bat :app:testDebugUnitTest
     testImplementation("junit:junit:4.13.2")
 }
