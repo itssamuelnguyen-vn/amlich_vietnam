@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../astro/sun_moon_card.dart';
 import '../data/settings.dart';
 import '../lunar/format.dart';
 import '../notes/day_notes_card.dart';
@@ -195,6 +196,8 @@ class CalendarScreenState extends State<CalendarScreen> {
                   DayNotesCard(date: _selected),
                   const SizedBox(height: 16),
                   AlmanacCard(date: _selected),
+                  const SizedBox(height: 16),
+                  SunMoonCard(date: _selected),
                   const SizedBox(height: 16),
                   LuckyHoursCard(date: _selected),
                   const SizedBox(height: 16),

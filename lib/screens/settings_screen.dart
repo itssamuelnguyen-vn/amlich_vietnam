@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../astro/sun_moon_card.dart';
 import '../counters/counter.dart';
 import '../data/backup.dart';
 import '../data/people.dart';
@@ -59,6 +60,15 @@ class SettingsScreen extends StatelessWidget {
                   onSelectionChanged: (v) => store.update(s.copyWith(textScale: v.first)),
                 ),
                 const SizedBox(height: 16),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.place_outlined),
+                  title: const Text('Thành phố'),
+                  subtitle: const Text('Cho giờ mặt trời, mặt trăng và thời tiết'),
+                  trailing: Text(currentCity(s).name, style: const TextStyle(fontWeight: FontWeight.w700)),
+                  onTap: () => pickCity(context),
+                ),
+                const SizedBox(height: 8),
                 const _Label('Tuần bắt đầu từ'),
                 SegmentedButton<bool>(
                   showSelectedIcon: false,

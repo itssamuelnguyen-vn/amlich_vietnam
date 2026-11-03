@@ -29,6 +29,7 @@ class Settings {
     this.googleCalendarName = '',
     this.counterWidgetId,
     this.pregnancyStart,
+    this.cityIndex = 0,
   });
 
   final ThemeMode themeMode;
@@ -60,6 +61,9 @@ class Settings {
   /// First day of the last menstrual period, when pregnancy tracking is on.
   final DateTime? pregnancyStart;
 
+  /// Index into `cities` (sun/moon times and weather).
+  final int cityIndex;
+
   Settings copyWith({
     ThemeMode? themeMode,
     double? textScale,
@@ -73,6 +77,7 @@ class Settings {
     String? googleCalendarName,
     int? Function()? counterWidgetId,
     DateTime? Function()? pregnancyStart,
+    int? cityIndex,
   }) => Settings(
     themeMode: themeMode ?? this.themeMode,
     textScale: textScale ?? this.textScale,
@@ -86,6 +91,7 @@ class Settings {
     googleCalendarName: googleCalendarName ?? this.googleCalendarName,
     counterWidgetId: counterWidgetId != null ? counterWidgetId() : this.counterWidgetId,
     pregnancyStart: pregnancyStart != null ? pregnancyStart() : this.pregnancyStart,
+    cityIndex: cityIndex ?? this.cityIndex,
   );
 
   Map<String, String> toMap() => {
@@ -101,6 +107,7 @@ class Settings {
     'google_calendar_name': googleCalendarName,
     'counter_widget_id': '${counterWidgetId ?? ''}',
     'pregnancy_start': pregnancyStart == null ? '' : pregnancyStart!.toIso8601String().substring(0, 10),
+    'city': '$cityIndex',
   };
 
   /// Unknown or missing keys fall back to the defaults, so old backups and new settings both load.
@@ -121,6 +128,7 @@ class Settings {
       googleCalendarName: m['google_calendar_name'] ?? '',
       counterWidgetId: int.tryParse(m['counter_widget_id'] ?? ''),
       pregnancyStart: DateTime.tryParse(m['pregnancy_start'] ?? ''),
+      cityIndex: int.tryParse(m['city'] ?? '') ?? 0,
     );
   }
 }
