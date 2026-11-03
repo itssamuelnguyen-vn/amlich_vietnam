@@ -55,6 +55,12 @@ installed directly on the phone, not published to Google Play. The app's user in
   `android\gradlew.bat :app:testDebugUnitTest` (set `JAVA_HOME` to the JDK, e.g. `D:\dev\android-sdk\jbr`). Regenerate
   its fixture when the Dart lunar code changes.
 
+## App icon
+
+The launcher icon comes from `tool/icon/logo.png`. After replacing that file, regenerate every size with
+`python tool/make_icons.py` (needs Pillow): it trims the logo, centres it so that even a circular mask keeps every drawn
+pixel, and writes the legacy, adaptive (white background) and monochrome (Android 13+ themed) icons.
+
 ## Building the APK
 
 See [`docs/build-apk.md`](docs/build-apk.md). In short: press `Ctrl+Shift+B` in VS Code; the APK lands in `build\apk\`.
