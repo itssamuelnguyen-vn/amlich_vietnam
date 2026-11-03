@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../data/birthdays.dart';
 import '../data/people.dart';
+import '../events/event_store.dart';
 import '../lunar/almanac.dart';
 import '../lunar/format.dart';
 import '../lunar/lunar_calendar.dart';
+import '../theme.dart';
 import 'day_sections.dart';
 import 'result_box.dart';
 
@@ -18,14 +21,7 @@ class AgeLookupCard extends StatefulWidget {
 class _AgeLookupCardState extends State<AgeLookupCard> {
   int _year = 1990;
 
-  Future<void> _save() async {
-    final name = await showDialog<String>(context: context, builder: (_) => const _NameDialog());
-    if (name == null || name.isEmpty || !mounted) return;
-    await PeopleScope.of(context).add(Person(name: name, birthYear: _year));
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Đã thêm $name vào tuổi cả nhà')));
-    }
-  }
+  Future<void> _save() => showPersonSheet(context, Person(name: '', birthYear: _year));
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +69,7 @@ class _AgeLookupCardState extends State<AgeLookupCard> {
           OutlinedButton.icon(
             onPressed: _save,
             icon: const Icon(Icons.person_add_alt_rounded),
-            label: const Text('Lưu vào tuổi cả nhà'),
+            label: const Text('Lưu vào Cả nhà'),
           ),
         ],
       ),
@@ -160,15 +156,31 @@ class _CoupleCardState extends State<CoupleCard> {
   }
 }
 
-class _NameDialog extends StatefulWidget {
-  const _NameDialog();
+/// Adds or edits a family member, with an optional solar or lunar birthday.
+Future<void> showPersonSheet(BuildContext context, Person person) => showModalBottomSheet(
+  context: context,
+  isScrollControlled: true,
+  showDragHandle: true,
+  builder: (_) => _PersonSheet(person: person),
+);
+
+class _PersonSheet extends StatefulWidget {
+  const _PersonSheet({required this.person});
+
+  final Person person;
 
   @override
-  State<_NameDialog> createState() => _NameDialogState();
+  State<_PersonSheet> createState() => _PersonSheetState();
 }
 
-class _NameDialogState extends State<_NameDialog> {
-  final _name = TextEditingController();
+class _PersonSheetState extends State<_PersonSheet> {
+  late final _name = TextEditingController(text: widget.person.name);
+  late int _year = widget.person.birthYear;
+  late bool _hasBirthday = widget.person.hasBirthday;
+  late bool _lunar = widget.person.birthLunar;
+  late int _day = widget.person.birthDay ?? 1;
+  late int _month = widget.person.birthMonth ?? 1;
+  bool _nameError = false;
 
   @override
   void dispose() {
@@ -176,59 +188,199 @@ class _NameDialogState extends State<_NameDialog> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Tên người này'),
-    content: TextField(
-      controller: _name,
-      autofocus: true,
-      textCapitalization: TextCapitalization.words,
-      decoration: const InputDecoration(hintText: 'VD: Bố, Mẹ, Bé Na…'),
-      onSubmitted: (v) => Navigator.pop(context, v.trim()),
+  Future<void> _save() async {
+    final name = _name.text.trim();
+    if (name.isEmpty) {
+      setState(() => _nameError = true);
+      return;
+    }
+    await saveWithBirthday(
+      PeopleScope.of(context),
+      EventScope.of(context),
+      widget.person.copyWith(
+        name: name,
+        birthYear: _year,
+        birthDay: () => _hasBirthday ? _day : null,
+        birthMonth: () => _hasBirthday ? _month : null,
+        birthLunar: _lunar,
+      ),
+    );
+    if (mounted) Navigator.pop(context);
+  }
+
+  Future<void> _delete() async {
+    await removeWithBirthday(PeopleScope.of(context), EventScope.of(context), widget.person);
+    if (mounted) Navigator.pop(context);
+  }
+
+  Widget _select(String label, int value, int max, ValueChanged<int> onChanged) => DropdownButtonFormField<int>(
+    key: ValueKey('$label$max'),
+    initialValue: value.clamp(1, max),
+    isExpanded: true,
+    menuMaxHeight: 320,
+    decoration: InputDecoration(
+      labelText: label,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
     ),
-    actions: [
-      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Huỷ')),
-      FilledButton(onPressed: () => Navigator.pop(context, _name.text.trim()), child: const Text('Lưu')),
-    ],
+    items: [for (var i = 1; i <= max; i++) DropdownMenuItem(value: i, child: Text('$i'))],
+    onChanged: (v) => onChanged(v!),
   );
+
+  @override
+  Widget build(BuildContext context) {
+    final currentYear = solarToLunar(today()).year;
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(20, 0, 20, 20 + MediaQuery.viewInsetsOf(context).bottom),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.person.id == null ? 'Thêm người' : 'Sửa thông tin',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                if (widget.person.id != null)
+                  IconButton(tooltip: 'Xoá', onPressed: _delete, icon: const Icon(Icons.delete_outline_rounded)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _name,
+              autofocus: widget.person.id == null,
+              textCapitalization: TextCapitalization.words,
+              onChanged: (_) {
+                if (_nameError) setState(() => _nameError = false);
+              },
+              decoration: InputDecoration(
+                labelText: 'Tên',
+                hintText: 'VD: Bố, Mẹ, Bé Na…',
+                errorText: _nameError ? 'Nhập tên' : null,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<int>(
+              initialValue: _year,
+              isExpanded: true,
+              menuMaxHeight: 360,
+              decoration: InputDecoration(
+                labelText: 'Năm sinh (âm lịch)',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              items: [
+                for (var y = currentYear; y >= 1900; y--)
+                  DropdownMenuItem(value: y, child: Text('$y · ${canChiYear(y)}')),
+              ],
+              onChanged: (y) => setState(() => _year = y!),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Nhớ sinh nhật'),
+              subtitle: const Text('Tạo sự kiện lặp hằng năm, nhắc trước 1 ngày'),
+              value: _hasBirthday,
+              onChanged: (v) => setState(() => _hasBirthday = v),
+            ),
+            if (_hasBirthday) ...[
+              SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(value: false, label: Text('Dương lịch')),
+                  ButtonSegment(value: true, label: Text('Âm lịch')),
+                ],
+                selected: {_lunar},
+                onSelectionChanged: (v) => setState(() => _lunar = v.first),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(child: _select('Ngày', _day, _lunar ? 30 : 31, (v) => setState(() => _day = v))),
+                  const SizedBox(width: 10),
+                  Expanded(child: _select('Tháng', _month, 12, (v) => setState(() => _month = v))),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  _lunar
+                      ? 'Sinh nhật âm lịch: mỗi năm rơi vào ngày dương khác nhau, app tự tính.'
+                      : 'Sinh nhật theo dương lịch.',
+                  style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant),
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
+            FilledButton(onPressed: _save, child: const Text('Lưu')),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-/// "Tuổi cả nhà": the saved family members. The calendar warns on days that clash with any of them.
+/// "Cả nhà": family members with their age, element and next birthday. The calendar warns on days that clash with
+/// them; birthdays become yearly events.
 class FamilyCard extends StatelessWidget {
   const FamilyCard({super.key});
 
   @override
   Widget build(BuildContext context) {
     final store = PeopleScope.of(context);
+    final events = EventScope.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final currentYear = solarToLunar(today()).year;
+    final now = today();
+    final currentYear = solarToLunar(now).year;
     return SectionCard(
       icon: Icons.family_restroom_rounded,
-      title: 'Tuổi cả nhà',
+      title: 'Cả nhà',
+      trailing: TextButton.icon(
+        onPressed: () => showPersonSheet(context, Person(name: '', birthYear: currentYear - 30)),
+        icon: const Icon(Icons.add_rounded, size: 18),
+        label: const Text('Thêm'),
+      ),
       child: store.people.isEmpty
           ? Text(
-              'Chưa có ai. Dùng "Tra tuổi" ở trên rồi bấm "Lưu vào tuổi cả nhà"; lịch sẽ báo những ngày xung tuổi.',
+              'Thêm tuổi và sinh nhật của mọi người: lịch sẽ báo ngày xung tuổi, nhắc sinh nhật (cả âm lịch) và '
+              'cho biết sắp tròn bao nhiêu tuổi.',
               style: TextStyle(color: scheme.onSurfaceVariant),
             )
           : Column(
               children: [
                 for (final p in store.people)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: CircleAvatar(
-                      backgroundColor: scheme.primary.withValues(alpha: 0.12),
-                      child: Text(AgeInfo(p.birthYear).animal, style: const TextStyle(fontSize: 20)),
-                    ),
-                    title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                    subtitle: Text(
-                      '${p.birthYear} · ${canChiYear(p.birthYear)} · ${AgeInfo(p.birthYear).ageIn(currentYear)} tuổi · '
-                      'mệnh ${AgeInfo(p.birthYear).element}',
-                    ),
-                    trailing: IconButton(
-                      tooltip: 'Xoá ${p.name}',
-                      icon: const Icon(Icons.close_rounded),
-                      onPressed: () => store.remove(p),
-                    ),
+                  Builder(
+                    builder: (context) {
+                      final info = AgeInfo(p.birthYear);
+                      final next = nextBirthday(p, events, now);
+                      final left = next == null ? 0 : daysBetween(now, next.date);
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        onTap: () => showPersonSheet(context, p),
+                        leading: CircleAvatar(
+                          backgroundColor: scheme.primary.withValues(alpha: 0.12),
+                          child: Text(info.animal, style: const TextStyle(fontSize: 20)),
+                        ),
+                        title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.w700)),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${p.birthYear} · ${info.canChi} · ${info.ageIn(currentYear)} tuổi · mệnh ${info.element}',
+                            ),
+                            if (next != null)
+                              Text(
+                                '🎂 ${p.birthDay}/${p.birthMonth}${p.birthLunar ? ' âm' : ''} · tròn ${next.age} tuổi · '
+                                '${left == 0 ? 'hôm nay!' : 'còn $left ngày'}',
+                                style: TextStyle(color: context.lich.goodDay, fontWeight: FontWeight.w600),
+                              ),
+                          ],
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                      );
+                    },
                   ),
               ],
             ),
