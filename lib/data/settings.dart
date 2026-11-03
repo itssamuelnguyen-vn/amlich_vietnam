@@ -28,6 +28,7 @@ class Settings {
     this.googleCalendarId,
     this.googleCalendarName = '',
     this.counterWidgetId,
+    this.pregnancyStart,
   });
 
   final ThemeMode themeMode;
@@ -56,6 +57,9 @@ class Settings {
   /// Day counter shown on the "Đếm ngày" widget; null shows the first one.
   final int? counterWidgetId;
 
+  /// First day of the last menstrual period, when pregnancy tracking is on.
+  final DateTime? pregnancyStart;
+
   Settings copyWith({
     ThemeMode? themeMode,
     double? textScale,
@@ -68,6 +72,7 @@ class Settings {
     int? Function()? googleCalendarId,
     String? googleCalendarName,
     int? Function()? counterWidgetId,
+    DateTime? Function()? pregnancyStart,
   }) => Settings(
     themeMode: themeMode ?? this.themeMode,
     textScale: textScale ?? this.textScale,
@@ -80,6 +85,7 @@ class Settings {
     googleCalendarId: googleCalendarId != null ? googleCalendarId() : this.googleCalendarId,
     googleCalendarName: googleCalendarName ?? this.googleCalendarName,
     counterWidgetId: counterWidgetId != null ? counterWidgetId() : this.counterWidgetId,
+    pregnancyStart: pregnancyStart != null ? pregnancyStart() : this.pregnancyStart,
   );
 
   Map<String, String> toMap() => {
@@ -94,6 +100,7 @@ class Settings {
     'google_calendar_id': '${googleCalendarId ?? ''}',
     'google_calendar_name': googleCalendarName,
     'counter_widget_id': '${counterWidgetId ?? ''}',
+    'pregnancy_start': pregnancyStart == null ? '' : pregnancyStart!.toIso8601String().substring(0, 10),
   };
 
   /// Unknown or missing keys fall back to the defaults, so old backups and new settings both load.
@@ -113,6 +120,7 @@ class Settings {
       googleCalendarId: int.tryParse(m['google_calendar_id'] ?? ''),
       googleCalendarName: m['google_calendar_name'] ?? '',
       counterWidgetId: int.tryParse(m['counter_widget_id'] ?? ''),
+      pregnancyStart: DateTime.tryParse(m['pregnancy_start'] ?? ''),
     );
   }
 }

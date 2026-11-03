@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../counters/counter_screens.dart';
 import '../lunar/format.dart';
+import '../pregnancy/pregnancy.dart';
 import '../lunar/lunar_calendar.dart';
 import '../theme.dart';
 import '../widgets/age_cards.dart';
@@ -38,6 +39,8 @@ class ToolsScreen extends StatelessWidget {
           const AgeLookupCard(),
           const SizedBox(height: 16),
           const FamilyCard(),
+          const SizedBox(height: 16),
+          const PregnancyCard(),
           const SizedBox(height: 16),
           const CoupleCard(),
           const SizedBox(height: 16),
