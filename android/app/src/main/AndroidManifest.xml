@@ -89,6 +89,28 @@
                 android:resource="@xml/widget_counter_info" />
         </receiver>
         <receiver
+            android:name=".StripWidgetProvider"
+            android:exported="false"
+            android:label="Lịch dải">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_strip_info" />
+        </receiver>
+        <receiver
+            android:name=".UpcomingWidgetProvider"
+            android:exported="false"
+            android:label="Sắp tới">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_upcoming_info" />
+        </receiver>
+        <receiver
             android:name=".ReminderReceiver"
             android:exported="false" />
         <!-- Midnight refresh; boot, clock and time-zone changes are system broadcasts still delivered to manifest receivers. -->

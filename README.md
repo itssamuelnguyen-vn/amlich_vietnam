@@ -19,6 +19,14 @@ installed directly on the phone, not published to Google Play. The app's user in
 | Age lookup (lunar age, zodiac, nạp âm element, harmonies and clashes), family ages, good-day search | Done |
 | Year view (12 months) | Done |
 | Day counters ("together for 1,234 days"): saved milestones with photo, upcoming 100/1000-day marks and anniversaries, notifications and a home-screen widget | Done |
+| Lý Thuần Phong travel hours, Bành Tổ's taboos, house-building check (Kim lâu, Hoang ốc, Tam tai), couple compatibility | Done |
+| Family birthdays (solar or lunar) mirrored as yearly events, with the age each turns | Done |
+| Share the day page or a day counter as an image | Done |
+| A note and a to-do list for any day | Done |
+| Pregnancy tracking: gestational age, due date, check-up windows | Done |
+| Sunrise/sunset, moonrise/moonset, moon illumination, next new/full moon for 18 cities | Done |
+| 7-day weather (Open-Meteo, needs internet) | Done |
+| Page-flip animation, five colour themes, 4×1 strip and "upcoming" widgets | Done |
 | Settings: theme, text size, week start, holiday groups; backup and restore to a file | Done |
 | Google Calendar sync: one-way, app → a calendar on the phone (normally Google), no OAuth needed | Done |
 
@@ -42,8 +50,12 @@ installed directly on the phone, not published to Google Play. The app's user in
   `amlich/widget` channel; tapping a day in the month widget opens the app on that day.
 - `lib/lunar/almanac.dart`: day-selection rules (trực by solar-term month, the 28 mansions, Hỷ thần / Tài thần,
   clashes and harmonies, nạp âm). These are folk beliefs whose details vary between sources; the rules were checked
-  against a published almanac on 13 dates (`test/almanac_test.dart`).
-- `lib/data/`: the SQLite database (`app_database.dart`, version 3), settings, family ages and backup files.
+  against a published almanac on 13 dates (`test/almanac_test.dart`); the travel hours and Bành Tổ lines on three more.
+- `lib/data/`: the SQLite database (`app_database.dart`, version 5), settings, family ages and birthdays
+  (`birthdays.dart`), backup files.
+- `lib/notes/`, `lib/pregnancy/`, `lib/share/`: day notes and to-dos, pregnancy tracking, sharing images.
+- `lib/astro/sun_moon.dart`: sun and moon rise/set and phases (low-precision formulas, checked against USNO data in
+  `test/sun_moon_test.dart`). `lib/weather/`: Open-Meteo forecast.
 - `lib/counters/`: day counters (model, store, screens). Photos are copied into the app's files; backups leave them out.
 - Reminders (`Reminders.kt`) are scheduled natively from the occurrences Flutter syncs, so they fire with the app
   closed; they are rescheduled after each one, at midnight, on boot and on every sync.

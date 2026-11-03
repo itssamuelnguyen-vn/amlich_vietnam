@@ -10,6 +10,7 @@ import '../events/event_store.dart';
 import '../notes/day_notes.dart';
 import '../lunar/format.dart';
 import '../sync/google_sync.dart';
+import '../theme.dart';
 import '../widget/widget_bridge.dart';
 import '../widgets/day_sections.dart';
 
@@ -47,6 +48,37 @@ class SettingsScreen extends StatelessWidget {
                   selected: {s.themeMode},
                   onSelectionChanged: (v) => store.update(s.copyWith(themeMode: v.first)),
                 ),
+                const SizedBox(height: 16),
+                const _Label('Màu chủ đề'),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    for (final p in AppPalette.values)
+                      Tooltip(
+                        message: p.label,
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: () => store.update(s.copyWith(palette: p)),
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(colors: [p.hero.$1, p.hero.$2]),
+                              border: Border.all(
+                                color: s.palette == p ? theme.colorScheme.onSurface : Colors.transparent,
+                                width: 3,
+                              ),
+                            ),
+                            child: s.palette == p ? const Icon(Icons.check_rounded, color: Colors.white) : null,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(s.palette.label, style: TextStyle(fontSize: 12.5, color: theme.colorScheme.onSurfaceVariant)),
                 const SizedBox(height: 16),
                 const _Label('Cỡ chữ'),
                 SegmentedButton<double>(

@@ -121,6 +121,8 @@ object Widgets {
         MonthWidgetProvider.update(context, manager, ids(context, manager, MonthWidgetProvider::class.java))
         CountdownWidgetProvider.update(context, manager, ids(context, manager, CountdownWidgetProvider::class.java))
         CounterWidgetProvider.update(context, manager, ids(context, manager, CounterWidgetProvider::class.java))
+        StripWidgetProvider.update(context, manager, ids(context, manager, StripWidgetProvider::class.java))
+        UpcomingWidgetProvider.update(context, manager, ids(context, manager, UpcomingWidgetProvider::class.java))
         scheduleMidnight(context)
         Reminders.reschedule(context)
     }
@@ -133,6 +135,7 @@ object Widgets {
         return listOf(
             TodayWidgetProvider::class.java, MonthWidgetProvider::class.java,
             CountdownWidgetProvider::class.java, CounterWidgetProvider::class.java,
+            StripWidgetProvider::class.java, UpcomingWidgetProvider::class.java,
         ).any { ids(context, manager, it).isNotEmpty() }
     }
 

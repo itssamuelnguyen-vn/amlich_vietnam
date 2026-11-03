@@ -7,6 +7,7 @@ import 'package:amlich_vietnam/lunar/format.dart';
 import 'package:amlich_vietnam/lunar/holidays.dart';
 import 'package:amlich_vietnam/lunar/lunar_calendar.dart';
 import 'package:amlich_vietnam/screens/settings_screen.dart';
+import 'package:amlich_vietnam/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -162,6 +163,22 @@ void main() {
     await tester.tap(find.text('Tháng 3'));
     await tester.pumpAndSettle();
     expect(find.text('Tháng 3, ${year + 1}'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('colour themes change the day page and are saved', (tester) async {
+    usePhoneScreen(tester);
+    final app = await testApp();
+    await tester.pumpWidget(app);
+    await tester.tap(find.text('Cài đặt').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Xanh ngọc'));
+    await tester.pumpAndSettle();
+    expect(app.settings.value.palette, AppPalette.ngoc);
+    expect(Settings.fromMap(app.settings.value.toMap()).palette, AppPalette.ngoc);
+    final context = tester.element(find.byType(SettingsScreen));
+    expect(context.lich.heroTop, AppPalette.ngoc.hero.$1);
+    expect(context.lich.holiday, const Color(0xFFC62828)); // holidays stay red
     expect(tester.takeException(), isNull);
   });
 }

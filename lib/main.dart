@@ -64,8 +64,8 @@ class AmLichApp extends StatelessWidget {
       builder: (context, _) => MaterialApp(
         title: 'Âm lịch',
         debugShowCheckedModeBanner: false,
-        theme: buildTheme(Brightness.light),
-        darkTheme: buildTheme(Brightness.dark),
+        theme: buildTheme(Brightness.light, settings.value.palette),
+        darkTheme: buildTheme(Brightness.dark, settings.value.palette),
         themeMode: settings.value.themeMode,
         locale: const Locale('vi'),
         supportedLocales: const [Locale('vi'), Locale('en')],

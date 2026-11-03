@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_month_bg"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:text="Sắp tới"
+        android:textColor="@color/widget_red"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/empty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Chưa có sự kiện nào"
+        android:textColor="@color/widget_muted"
+        android:textSize="13sp" />
+
+    <TextView android:id="@+id/row1" style="@style/WidgetUpcomingRow" />
+    <TextView android:id="@+id/row2" style="@style/WidgetUpcomingRow" />
+    <TextView android:id="@+id/row3" style="@style/WidgetUpcomingRow" />
+    <TextView android:id="@+id/row4" style="@style/WidgetUpcomingRow" />
+</LinearLayout>

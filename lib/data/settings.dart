@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 
+import '../theme.dart';
 import 'app_database.dart';
 
 /// Holiday groups that can be shown or hidden.
@@ -30,6 +31,7 @@ class Settings {
     this.counterWidgetId,
     this.pregnancyStart,
     this.cityIndex = 0,
+    this.palette = AppPalette.son,
   });
 
   final ThemeMode themeMode;
@@ -64,6 +66,8 @@ class Settings {
   /// Index into `cities` (sun/moon times and weather).
   final int cityIndex;
 
+  final AppPalette palette;
+
   Settings copyWith({
     ThemeMode? themeMode,
     double? textScale,
@@ -78,6 +82,7 @@ class Settings {
     int? Function()? counterWidgetId,
     DateTime? Function()? pregnancyStart,
     int? cityIndex,
+    AppPalette? palette,
   }) => Settings(
     themeMode: themeMode ?? this.themeMode,
     textScale: textScale ?? this.textScale,
@@ -92,6 +97,7 @@ class Settings {
     counterWidgetId: counterWidgetId != null ? counterWidgetId() : this.counterWidgetId,
     pregnancyStart: pregnancyStart != null ? pregnancyStart() : this.pregnancyStart,
     cityIndex: cityIndex ?? this.cityIndex,
+    palette: palette ?? this.palette,
   );
 
   Map<String, String> toMap() => {
@@ -108,6 +114,7 @@ class Settings {
     'counter_widget_id': '${counterWidgetId ?? ''}',
     'pregnancy_start': pregnancyStart == null ? '' : pregnancyStart!.toIso8601String().substring(0, 10),
     'city': '$cityIndex',
+    'palette': palette.name,
   };
 
   /// Unknown or missing keys fall back to the defaults, so old backups and new settings both load.
@@ -129,6 +136,7 @@ class Settings {
       counterWidgetId: int.tryParse(m['counter_widget_id'] ?? ''),
       pregnancyStart: DateTime.tryParse(m['pregnancy_start'] ?? ''),
       cityIndex: int.tryParse(m['city'] ?? '') ?? 0,
+      palette: AppPalette.values.asNameMap()[m['palette']] ?? AppPalette.son,
     );
   }
 }

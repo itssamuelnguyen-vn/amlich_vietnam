@@ -4,4 +4,6 @@
     <string name="widget_month_description">Lịch tháng có ngày âm và sự kiện</string>
     <string name="widget_countdown_description">Đếm ngược tới Tết hoặc sự kiện bạn chọn</string>
     <string name="widget_counter_description">Đếm ngày từ một cột mốc, như ngày yêu nhau</string>
+    <string name="widget_strip_description">Một dải gọn: ngày dương, ngày âm, Can Chi</string>
+    <string name="widget_upcoming_description">Các sự kiện sắp tới</string>
 </resources>
